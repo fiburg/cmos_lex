@@ -9,7 +9,7 @@ class SkyImagerSetup(Instrument):
 
     """
 
-    def __init__(self,instrument_name):
+    def __init__(self):
         pass
 
 

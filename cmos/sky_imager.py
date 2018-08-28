@@ -11,12 +11,15 @@ class SkyImager(Instrument):
 
     """
 
-    def __init__(self):
+    def __init__(self,instrument_name):
+        self.instrument_name = self._check_for_instrument(instrument_name)
         self.image = None
-        self.image_center_pixel = None
+        self.scale_factor = None
 
 
-    def read_image(self,input_file, scale_factor):
+
+
+    def load_image(self,input_file, scale_factor=100):
         """
         Routine zum einlesen einer .png datei. Diese wird als numpy array
         zurückgegeben.
@@ -41,6 +44,7 @@ class SkyImager(Instrument):
         image_array.setflags(write=True)
 
         self.image = image_array
+        self.scale_factor = scale_factor
 
 
     def find_center(self):
@@ -57,6 +61,12 @@ class SkyImager(Instrument):
 
         return (center_x,center_y)
 
+    def get_image_size(self):
+        x_size = self.image.shape[0]
+        y_size = self.image.shape[1]
+
+        return (x_size,y_size)
+
     def crop_image(self, elevation=30):
         """
         Crops the image, so that only the center is being used.
@@ -72,6 +82,14 @@ class SkyImager(Instrument):
         pass
 
 
-    def _read_settings(self):
+        x_center, y_center = self.find_center()
+        x_size, y_size = self.get_image_size()
+        y, x = np.ogrid[-y_center:y_size - y_center, -x_center:x_size - x_center]
+        print(x_center, x_size, x)
+        center_mask = x ** 2 + y ** 2 <= (7.65 * self.scale_factor) ** 2
+        self.image[:,:,:][~center_mask] = [0, 0, 0]
+
+
+    def _read_lense_settings(self):
         pass
 
