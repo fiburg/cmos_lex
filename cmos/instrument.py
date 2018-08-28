@@ -4,9 +4,10 @@ class Instrument(object):
     VALID_INSTRUMENT_NAMES = ["hq", "south", "west", "rad_south", "rad_north"]
 
     def __init__(self):
-        self.lat = None
-        self.lon = None
-        self.height = None
+        self.lat = 53
+        self.lon = 11
+        self.height = 0
+        self.date = None
 
     def load_instrument_arguments(self):
         """
