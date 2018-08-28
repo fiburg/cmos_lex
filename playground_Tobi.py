@@ -2,9 +2,9 @@ import cmos
 import matplotlib.pyplot as plt
 
 
-file = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM2_JPG_20180826/LEX_WKM2_Image_20180826_092340_UTCp1.jpg"
+file = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM2_JPG_20180826/LEX_WKM2_Image_20180826_122340_UTCp1.jpg"
 
-sky_imager = cmos.SkyImager("hq")
+sky_imager = cmos.SkyImager("west")
 sky_imager.load_image(file)
 sky_imager.crop_image(0)
 sky_imager.create_cloud_mask()

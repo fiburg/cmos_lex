@@ -199,8 +199,8 @@ class SkyImager(Instrument):
         y, x = np.ogrid[-y_sol_cen:y_size - y_sol_cen, -x_sol_cen:x_size - x_sol_cen]
         sol_mask = x ** 2 + y ** 2 <= Radius_sol ** 2
         sol_mask_cen = x ** 2 + y ** 2 <= Radius_sol_center ** 2
-        sol_mask_cen1 = sol_mask_cen
-        self.image[:, :, :][sol_mask_cen] = [0, 0, 0]
+        sol_mask_cen1 = np.logical_xor(sol_mask_cen, sol_mask)
+        self.image[:, :, :][sol_mask_cen1] = [0, 0, 0]
 
 
 
