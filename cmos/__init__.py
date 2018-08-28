@@ -1,3 +1,3 @@
-from . import instrument
+from .instrument import Instrument
 from . import radiation
-from . import sky_imager
+from .sky_imager import SkyImager

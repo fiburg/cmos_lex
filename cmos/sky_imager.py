@@ -1,13 +1,11 @@
 from PIL import Image
 import numpy as np
+from . import Instrument
 
-class SkyImager(object):
+class SkyImager(Instrument):
 
     def __init__(self):
-        """
 
-
-        """
         self.image = None
         self.image_center_pixel = None
 
