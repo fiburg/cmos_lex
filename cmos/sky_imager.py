@@ -20,6 +20,7 @@ class SkyImager(Instrument):
         self.image = None
         self.cloud_image = None
         self.original_image = None
+        self.angle_array = None
         self.scale_factor = None
         self.input_file = None
 
@@ -145,6 +146,100 @@ class SkyImager(Instrument):
         self.sun_azimuth = pysolar.solar.get_azimuth(latitude_deg=self.lat, longitude_deg=self.lon,
                                    when=self.date, elevation=self.height)
 
+
+    def create_angle_array(self):
+        x_size, y_size = self.get_image_size()
+
+        angle_array = np.zeros([x_size,y_size,2])
+
+        xx, yy = np.meshgrid(range(x_size),range(y_size), sparse=True)
+
+        x_dash = self._convert_var_to_dash(xx)
+        y_dash = self._convert_var_to_dash(yy)
+
+        # Azimuth angle:
+        angle_array[xx,yy,0] = SkyImager._azimuth_angle(x_dash,y_dash)
+        angle_array[:,:,0] = np.subtract(angle_array[:,:,0],90)
+        negative_mask = angle_array[:, :, 0] < 0
+        angle_array[:, :, 0][negative_mask] = np.add(angle_array[:, :, 0][negative_mask],360)
+
+        # Elevation angle:
+        angle_array[xx,yy,1] = self._elevation_angle(x_dash,y_dash)
+        angle_array[:,:,1] = np.subtract(angle_array[:,:,1],90)
+        angle_array[:,:,1] = np.negative(angle_array[:,:,1])
+
+
+        self.angle_array = angle_array
+
+
+    def _convert_var_to_dash(self,var):
+        """
+        This function converts a variable x or y to be dependent on the center:
+
+            x' = x - a
+            y* = y - a
+
+        Args:
+            var: x or y
+
+        Returns: x' or y'
+
+        """
+        a = self.get_image_size()[0] / 2
+        return var - a
+
+
+    @staticmethod
+    def _azimuth_angle(x_dash,y_dash):
+        """
+        calculates the azimuth angle in the picture from coordinates x' and y'
+
+
+        Args:
+            x_dash: x'
+            y_dash: y'
+
+        Returns:
+            azimuth angle alpha of the coordinates x' and y'.
+
+        """
+        return np.rad2deg(np.arctan2(x_dash,y_dash))
+
+
+    def _elevation_angle(self,x_dash,y_dash):
+        """
+        calculates the elevation angle in the picture from coordinates x' and y'
+
+        Args:
+            x_dash: x'
+            y_dash: y'
+
+        Returns:
+            elevation angle epsilon of the coordinates x' and y'.
+
+        """
+        a = self.get_image_size()[0]/2
+        r = SkyImager._calc_radius(x_dash,y_dash)
+        return np.multiply(90, (1 - np.divide(r, a)))
+
+    @staticmethod
+    def _calc_radius(x,y):
+        """
+        calculates the radius from x and y:
+
+        r = sqrt(x² + y²)
+
+        Args:
+            x:
+            y:
+
+        Returns:
+            radius r.
+        """
+        return np.sqrt(np.power(x,2) + np.power(y,2))
+
+
+
     def remove_sun(self):
         """
         Calculates the center of the sun inside the image.
@@ -164,13 +259,14 @@ class SkyImager(Instrument):
 
         x_center, y_center = self.find_center()
 
-        x_sol_cen = x_center
-        y_sol_cen = y_center
+
         RadiusBild = self.get_image_size()[0]/2
         sza_dist = RadiusBild * np.cos(sza)
 
-        x = x_sol_cen - sza_dist * np.cos(AzimutWinkel + np.deg2rad(180))
-        y = y_sol_cen - sza_dist * np.sin(AzimutWinkel + np.deg2rad(180))
+        x = x_center - sza_dist * np.cos(AzimutWinkel + np.deg2rad(180))
+        y = y_center - sza_dist * np.sin(AzimutWinkel + np.deg2rad(180))
+
+
 
         ###-----------Draw circle around position of sun-------------------------------------------------------------------------------------------
 
