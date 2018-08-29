@@ -12,11 +12,10 @@ class SkyImager(Instrument):
     Class to process the Allsky Images.
     This Class takes the raw input image and is capable of
     - rotating it to have the right north-angle
-    -
 
     """
 
-    def __init__(self,instrument_name):
+    def __init__(self, instrument_name):
         self.instrument_name = self._check_for_instrument(instrument_name)
         super().__init__()
         self.image = None
