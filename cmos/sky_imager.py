@@ -234,7 +234,13 @@ class SkyImager(Instrument):
         y_dash= self._convert_var_to_dash(y)
 
         azimuth = SkyImager._azimuth_angle(x_dash,y_dash)
+        azimuth -= 90
+        if azimuth < 0 :
+            azimuth += 360
+
         elevation = self._elevation_angle(x_dash,y_dash)
+        elevation -= 90
+        elevation *= -1
 
         return (azimuth, elevation)
 
@@ -368,4 +374,12 @@ class SkyImager(Instrument):
     def _apply_rotation_calib(self):
         # self._rotate_image()
         pass
+
+
+    def hemisphere_to_plain(self,cbh):
+        pass
+        # alpha, epsilon = self.pixel_to_ele_azi(x,y)
+        # r_hut = cbh * np.tan(np.deg2rad(90) - epsilon)
+
+
 
