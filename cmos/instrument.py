@@ -21,6 +21,7 @@ class Instrument(object):
         self.lon = None
         self.height = None
         self.date = None
+        self.tz_info = None
         self.load_instrument_arguments()
 
     def load_instrument_arguments(self):
@@ -47,6 +48,7 @@ class Instrument(object):
         self.lat = float(config["DEFAULT"]["LAT"])
         self.lon = float(config["DEFAULT"]["LON"])
         self.height = float(config["DEFAULT"]["HEIGHT"])
+        self.tz_info = float(config["DEFAULT"]["UTCOFFSET"])
 
 
 

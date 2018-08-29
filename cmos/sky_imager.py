@@ -4,7 +4,8 @@ from . import Instrument
 import pysolar
 import os
 from datetime import datetime as dt
-
+import datetime
+from pytz import timezone
 
 class SkyImager(Instrument):
     """
@@ -70,6 +71,8 @@ class SkyImager(Instrument):
         filename = os.path.split(self.input_file)[-1]
         _date = "_".join(filename.split("_")[3:5])
         self.date = dt.strptime(_date,"%Y%m%d_%H%M%S")
+        self.date = self.date - datetime.timedelta(hours=1)
+        self.date.replace(tzinfo=timezone("UTC"))
 
     def find_center(self):
         """
@@ -86,6 +89,12 @@ class SkyImager(Instrument):
         return (center_x,center_y)
 
     def get_image_size(self):
+        """
+        get the length along both axes of the input image.
+
+        Returns:
+            tuple of (x_size, y_size)
+        """
         x_size = self.image.shape[0]
         y_size = self.image.shape[1]
 
@@ -115,6 +124,14 @@ class SkyImager(Instrument):
         pass
 
     def create_cloud_mask(self):
+        """
+        Creates an array self.cloud_image where clouds are masked, based on some
+        sky index (SI) and brightness index (BI).
+
+        Returns:
+
+        """
+
 
         image_f = self.image.astype(float)
 
@@ -122,7 +139,6 @@ class SkyImager(Instrument):
             ((image_f[:, :, 2]) + (image_f[:, :, 0])))
 
         SI[np.isnan(SI)] = 1
-        print(np.where(SI < 1))
 
         mask_sol1 = SI < 0.1
         Radius = 990
@@ -144,11 +160,39 @@ class SkyImager(Instrument):
         self.sun_elevation = pysolar.solar.get_altitude(latitude_deg=self.lat, longitude_deg=self.lon,
                                    when=self.date, elevation=self.height)
 
-        self.sun_azimuth = pysolar.solar.get_azimuth(latitude_deg=self.lat, longitude_deg=self.lon,
+        sun_azimuth = pysolar.solar.get_azimuth(latitude_deg=self.lat, longitude_deg=self.lon,
                                    when=self.date, elevation=self.height)
+
+        if sun_azimuth < 0:
+            if (sun_azimuth >= -180):
+                solarheading = ((sun_azimuth * -1) + 180)
+            if (sun_azimuth < -180):
+                solarheading = ((sun_azimuth * -1) - 180)
+            if sun_azimuth >= 0:
+                solarheading = sun_azimuth
+
+        self.sun_azimuth = solarheading
 
 
     def create_angle_array(self):
+        """
+        Creates an array in which the azimuth and elevation angles are the values
+        The 0 dimension is th azimuth
+        The 1 dimension is the elevation
+
+        The values are for a theoretically perfect alligned and turned image!
+
+        Examples:
+            To get the elevation over the whole allskyimage :
+
+            >>> plt.imshow(self.angle_array[:,:,1])
+
+
+
+        Returns:
+            sets the self.angle_array
+
+        """
         x_size, y_size = self.get_image_size()
 
         angle_array = np.zeros([x_size,y_size,2])
@@ -171,6 +215,26 @@ class SkyImager(Instrument):
 
 
         self.angle_array = angle_array
+
+    def pixel_to_ele_azi(self,x,y):
+        """
+        Method to get the azimuth and elevation of a single allsky-image pixel.
+
+        Args:
+            x: position pixel in x direction
+            y: position pixel in y direction
+
+        Returns:
+            tuple of (azimuth, elevation)
+        """
+
+        x_dash = self._convert_var_to_dash(x)
+        y_dash= self._convert_var_to_dash(y)
+
+        azimuth = SkyImager._azimuth_angle(x_dash,y_dash)
+        elevation = self._elevation_angle(x_dash,y_dash)
+
+        return (azimuth, elevation)
 
 
     def _convert_var_to_dash(self,var):
@@ -239,41 +303,49 @@ class SkyImager(Instrument):
         """
         return np.sqrt(np.power(x,2) + np.power(y,2))
 
+    @staticmethod
+    def find_nearest_idx(array1,array2, value1,value2):
+        """
+        finds the nearest coordinates in two array representing the azimuth and
+        elevation.
+
+        Args:
+            array1: array containing azimuth angles
+            array2: array containing elevation angles
+            value1: azimuth angle of the coordinates to be found in the arrays
+            value2: elevation angle of the coordinates to be found in the arrays
+
+        Returns:
+            the index of the coordinates where the values are closest to the arrays.
+
+        """
+        temp = np.sqrt(np.square(array1 - value1) + np.square(array2 - value2))
+        idx = np.where(temp == temp.min())
+        return idx
 
 
     def remove_sun(self):
         """
-        Calculates the center of the sun inside the image.
-
-        Returns: x,y pixel of center of the sun.
+        Calculates the center of the sun inside the image
+        and draws a circle around it.
 
         """
 
-        azimuth = self.sun_azimuth
-
-        azimuth -= 90
-        if azimuth < 0:
-            azimuth *= (-1)
-
-        AzimutWinkel = ((2 * np.pi) / 360) * (azimuth - 90)
-        sza = ((2 * np.pi) / 360) * azimuth
-
-        x_center, y_center = self.find_center()
+        if not self.angle_array:
+            self.create_angle_array()
 
 
-        RadiusBild = self.get_image_size()[0]/2
-        sza_dist = RadiusBild * np.cos(sza)
 
-        x = x_center - sza_dist * np.cos(AzimutWinkel + np.deg2rad(180))
-        y = y_center - sza_dist * np.sin(AzimutWinkel + np.deg2rad(180))
+        sun_pos = self.find_nearest_idx(self.angle_array[:,:,0],self.angle_array[:,:,1],
+                                        self.sun_azimuth,self.sun_elevation)
 
 
 
         ###-----------Draw circle around position of sun-------------------------------------------------------------------------------------------
 
 
-        x_sol_cen = int(x)
-        y_sol_cen = int(y)
+        x_sol_cen = int(sun_pos[0])
+        y_sol_cen = int(sun_pos[1])
         Radius_sol = 300
         Radius_sol_center = 250
 
