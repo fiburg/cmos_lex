@@ -7,6 +7,7 @@ from datetime import datetime as dt
 import datetime
 from pytz import timezone
 import scipy
+import collections
 
 class SkyImager(Instrument):
     """
@@ -332,7 +333,7 @@ class SkyImager(Instrument):
 
         """
 
-        if not self.angle_array:
+        if not isinstance(self.angle_array, collections.Iterable):
             self.create_angle_array()
 
 
