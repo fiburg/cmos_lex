@@ -1,15 +1,26 @@
 import os
 import configparser
 
+
 class Instrument(object):
-    VALID_INSTRUMENT_NAMES = ["hq", "south", "west", "rad_south", "rad_north"]
+    """
+    Abstract class for each instrument. Valid instruments are the sky imagers `hq`, `south`, `west`, the mobile
+    radiation stations `rad_south`, `rad_north` and the ceilometer `ceilo`.
+
+    Attributes:
+        lat : Latitude
+        lon : Longitude
+        height : Height of the instrument
+        date : timestamp, datetime object
+    """
+
+    VALID_INSTRUMENT_NAMES = ["hq", "south", "west", "rad_south", "rad_north", "ceilo"]
 
     def __init__(self):
         self.lat = None
         self.lon = None
         self.height = None
         self.date = None
-
         self.load_instrument_arguments()
 
     def load_instrument_arguments(self):
@@ -18,12 +29,7 @@ class Instrument(object):
 
         Args:
             instrument_name: Name of the instrument to use.
-
-        Returns:
-
         """
-
-
 
         here = os.path.realpath(__file__)
         here = os.path.split(here)[0]

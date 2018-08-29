@@ -4,7 +4,7 @@ from . import Instrument
 import pysolar
 import os
 from datetime import datetime as dt
-import datetime
+
 
 class SkyImager(Instrument):
     """
@@ -16,8 +16,8 @@ class SkyImager(Instrument):
     """
 
     def __init__(self,instrument_name):
-        self.instrument_name = self._check_for_instrument(instrument_name)
         super().__init__()
+        self.instrument_name = self._check_for_instrument(instrument_name)
         self.image = None
         self.cloud_image = None
         self.original_image = None
@@ -27,11 +27,7 @@ class SkyImager(Instrument):
         self.sun_azimuth = None
         self.sun_elevation = None
 
-
-
-
-
-    def load_image(self,input_file, scale_factor=100):
+    def load_image(self, input_file, scale_factor=100):
         """
         Routine zum einlesen einer .png datei. Diese wird als numpy array
         zurückgegeben.
@@ -64,7 +60,6 @@ class SkyImager(Instrument):
         self.get_sun_position()
         self.remove_sun()
 
-
     def _get_date_from_image_name(self):
         """
         sets the self.date by reading the name of the input file.
@@ -74,9 +69,6 @@ class SkyImager(Instrument):
         filename = os.path.split(self.input_file)[-1]
         _date = "_".join(filename.split("_")[3:5])
         self.date = dt.strptime(_date,"%Y%m%d_%H%M%S")
-
-
-
 
     def find_center(self):
         """
@@ -118,10 +110,8 @@ class SkyImager(Instrument):
         center_mask = x ** 2 + y ** 2 <= (crop_size) ** 2
         self.image[:,:,:][~center_mask] = [0,0,0]
 
-
     def _read_lense_settings(self):
         pass
-
 
     def create_cloud_mask(self):
 
@@ -144,7 +134,6 @@ class SkyImager(Instrument):
         self.cloud_image = self.image.copy()
         self.cloud_image[:, :, :][mask_sol1] = [255, 0, 0]
 
-
     def get_sun_position(self):
         """
         Calculates the theoretic position of the sun by the lon, lat height and
@@ -156,7 +145,6 @@ class SkyImager(Instrument):
 
         self.sun_azimuth = pysolar.solar.get_azimuth(latitude_deg=self.lat, longitude_deg=self.lon,
                                    when=self.date, elevation=self.height)
-
 
     def remove_sun(self):
         """
