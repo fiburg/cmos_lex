@@ -6,6 +6,7 @@ import os
 from datetime import datetime as dt
 import datetime
 from pytz import timezone
+import scipy
 
 class SkyImager(Instrument):
     """
@@ -59,6 +60,7 @@ class SkyImager(Instrument):
 
         self._get_date_from_image_name()
         self.get_sun_position()
+        self._apply_rotation_calib()
         self.remove_sun()
 
     def _get_date_from_image_name(self):
@@ -359,4 +361,10 @@ class SkyImager(Instrument):
 
 
 
+    def _rotate_image(self, deg):
+        self.image = scipy.ndimage.rotate(self.image,angle=deg)
+
+    def _apply_rotation_calib(self):
+        # self._rotate_image()
+        pass
 

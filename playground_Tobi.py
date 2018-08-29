@@ -15,7 +15,7 @@ print(sky_imager.sun_elevation,sky_imager.sun_azimuth)
 
 # sky_imager.sun_position_in_image()
 
-sky_imager.create_angle_array()
+# sky_imager.create_angle_array()
 
 # print(sky_imager.angle_array)
 
