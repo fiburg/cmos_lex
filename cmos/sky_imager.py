@@ -31,6 +31,8 @@ class SkyImager(Instrument):
         self.lat_lon_array = None
 
         self.scale_factor = None
+        self.crop_elevation = None
+
         self.input_file = None
 
         self.cloud_height = None
@@ -72,7 +74,7 @@ class SkyImager(Instrument):
 
         self._get_date_from_image_name()
         self.get_sun_position()
-        self.crop_image(self.crop_elevation)
+        self.image = self.crop_image(self.image, self.crop_elevation)
         self._apply_rotation_calib()
         self.create_cloud_mask()
         # self.create_lat_lon_cloud_mask()
@@ -113,7 +115,7 @@ class SkyImager(Instrument):
 
         return x_size, y_size
 
-    def crop_image(self, elevation=30):
+    def crop_image(self, image, elevation=30, crop_value=0):
         """
         Crops the image, so that only the center is being used.
         An elevation angle of 30 would mean, that everything below 30 degrees
@@ -131,7 +133,20 @@ class SkyImager(Instrument):
         crop_size = x_size / 2 - (x_size / 2 / 90 * elevation)
 
         center_mask = x ** 2 + y ** 2 <= (crop_size) ** 2
-        self.image[:, :, :][~center_mask] = [0, 0, 0]
+
+        print("DIMENSION: ", np.ndim(image))
+        if np.shape(image)[2] == 3:
+            image[:,:,:][~center_mask] = [crop_value,crop_value,crop_value]
+        elif np.shape(image)[2] == 2:
+            print("Cropping image!")
+            image[:, :][~center_mask] = [crop_value,crop_value]
+        elif np.ndim(image) == 2:
+            print("Cropping image!")
+            image[:, :][~center_mask] = crop_value
+        else:
+            raise IndexError("For this index the cropping is not implemented yet.")
+
+        return image
 
     def _read_lense_settings(self):
         pass
@@ -199,19 +214,29 @@ class SkyImager(Instrument):
 
         dist = np.multiply(np.tan(np.deg2rad(self.angle_array[:,:,1])),self.cloud_height)
 
-        dx = np.multiply(dist, np.sin(np.deg2rad(self.angle_array[:,:,0]))) # theta measured clockwise from due north
+        print("DIST: ", np.min(dist))
+
+        dx = np.multiply(dist, np.sin(np.deg2rad(self.angle_array[:,:,0]))) # azimuth measured clockwise from due north
         dy = np.multiply(dist, np.cos(np.deg2rad(self.angle_array[:,:,0]))) # dx, dy same units as R
+
+        print("DX DY: ", np.min(dx), np.min(dy))
 
         delta_longitude = np.divide(dx, (np.multiply(111320, np.cos(np.deg2rad(self.lat)))) )#dx, dy in meters
         delta_latitude = np.divide(dy, 110540) # result in degrees long / lat
 
+        print("DELTA LATLON: ", np.min(delta_latitude),np.min(delta_longitude))
+
         final_longitude = np.add(self.lon, delta_longitude)
         final_latitude = np.add(self.lat, delta_latitude)
+
+        print("FINAL LATLON: ", np.min(final_latitude), np.min(final_longitude))
 
         self.lat_lon_array = self.image[:,:,:2].copy().astype(float)
         self.lat_lon_array[:,:,:] = np.nan
         self.lat_lon_array[:,:,0] = final_latitude
         self.lat_lon_array[:,:,1] = final_longitude
+
+        self.lat_lon_array = self.crop_image(self.lat_lon_array, crop_value=np.nan)
 
 
     def get_sun_position(self):
@@ -275,7 +300,7 @@ class SkyImager(Instrument):
         angle_array[:, :, 1] = np.subtract(angle_array[:, :, 1], 90)
         angle_array[:, :, 1] = np.negative(angle_array[:, :, 1])
 
-        self.angle_array = angle_array
+        self.angle_array = self.crop_image(angle_array,elevation=self.crop_elevation,crop_value=0)
 
     def pixel_to_ele_azi(self, x, y):
         """
