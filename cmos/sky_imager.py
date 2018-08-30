@@ -394,7 +394,7 @@ class SkyImager(Instrument):
 
         """
 
-        if not self.angle_array:
+        if not isinstance(self.angle_array, collections.Iterable):
             self.create_angle_array()
 
         sun_pos = self.find_nearest_idx(self.angle_array[:, :, 0], self.angle_array[:, :, 1],
