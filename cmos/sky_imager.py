@@ -7,7 +7,8 @@ from datetime import datetime as dt
 import datetime
 from pytz import timezone
 import scipy
-
+import collections
+import geopy
 
 class SkyImager(Instrument):
     """
@@ -20,17 +21,24 @@ class SkyImager(Instrument):
     def __init__(self, instrument_name):
         self.instrument_name = self._check_for_instrument(instrument_name)
         super().__init__()
+
         self.image = None
         self.cloud_image = None
         self.original_image = None
         self.angle_array = None
+        self.cloud_mask = None
+        self.lat_lon_cloud_mask = None
+        self.lat_lon_array = None
+
         self.scale_factor = None
         self.input_file = None
+
+        self.cloud_height = None
 
         self.sun_azimuth = None
         self.sun_elevation = None
 
-    def load_image(self, input_file, scale_factor=100):
+    def load_image(self, input_file,cloud_height, scale_factor=100, crop_elevation=30):
         """
         Routine zum einlesen einer .png datei. Diese wird als numpy array
         zurückgegeben.
@@ -44,6 +52,7 @@ class SkyImager(Instrument):
 
         """
         self.input_file = input_file
+        self.cloud_height = cloud_height
         image_raw = Image.open(input_file)
         x_size_raw = image_raw.size[0]
         y_size_raw = image_raw.size[1]
@@ -59,9 +68,14 @@ class SkyImager(Instrument):
         self.original_image = self.image.copy()
         self.scale_factor = scale_factor
 
+        self.crop_elevation = crop_elevation
+
         self._get_date_from_image_name()
         self.get_sun_position()
+        self.crop_image(self.crop_elevation)
         self._apply_rotation_calib()
+        self.create_cloud_mask()
+        # self.create_lat_lon_cloud_mask()
         self.remove_sun()
 
     def _get_date_from_image_name(self):
@@ -148,6 +162,57 @@ class SkyImager(Instrument):
         # mask_sol1 = np.logical_and(mask_sol1)
         self.cloud_image = self.image.copy()
         self.cloud_image[:, :, :][mask_sol1] = [255, 0, 0]
+        self.cloud_mask = self.cloud_image[:,:,0].copy()
+        self.cloud_mask[:,:] = 0
+        self.cloud_mask[:,:][mask_sol1] = 1
+
+    def create_lat_lon_cloud_mask(self):
+        if not isinstance(self.image,collections.Iterable):
+            raise NotImplementedError("No image loaded yet. Image needs to be loaded first using the load_image method.")
+
+        if not isinstance(self.lat_lon_array, collections.Iterable):
+            self.create_lat_lon_array()
+
+        if not isinstance(self.cloud_mask,collections.Iterable):
+            self.create_cloud_mask()
+
+
+        self.lat_lon_cloud_mask = self.image.copy().astype(float)
+        self.lat_lon_cloud_mask[:,:,:] = np.nan
+        self.lat_lon_cloud_mask[:,:,0] = self.cloud_mask[:,:]
+        self.lat_lon_cloud_mask[:,:,1] = self.lat_lon_array[:,:,0]
+        self.lat_lon_cloud_mask[:,:,2] = self.lat_lon_array[:,:,1]
+
+    def create_lat_lon_array(self):
+        """
+        Using the angle array and a height creating a similar aray containing the lat and lon values of each pixel.
+        TODO: Dies macht das entzerren des Bildes auf eine Ebene evtl. sogar überflüssig!
+
+        Returns:
+
+        """
+        if not isinstance(self.image,collections.Iterable):
+            raise NotImplementedError("No image loaded yet. Image needs to be loaded first using the load_image method.")
+
+        if not isinstance(self.angle_array, collections.Iterable):
+            self.create_angle_array()
+
+        dist = np.multiply(np.tan(np.deg2rad(self.angle_array[:,:,1])),self.cloud_height)
+
+        dx = np.multiply(dist, np.sin(np.deg2rad(self.angle_array[:,:,0]))) # theta measured clockwise from due north
+        dy = np.multiply(dist, np.cos(np.deg2rad(self.angle_array[:,:,0]))) # dx, dy same units as R
+
+        delta_longitude = np.divide(dx, (np.multiply(111320, np.cos(np.deg2rad(self.lat)))) )#dx, dy in meters
+        delta_latitude = np.divide(dy, 110540) # result in degrees long / lat
+
+        final_longitude = np.add(self.lon, delta_longitude)
+        final_latitude = np.add(self.lat, delta_latitude)
+
+        self.lat_lon_array = self.image[:,:,:2].copy().astype(float)
+        self.lat_lon_array[:,:,:] = np.nan
+        self.lat_lon_array[:,:,0] = final_latitude
+        self.lat_lon_array[:,:,1] = final_longitude
+
 
     def get_sun_position(self):
         """
