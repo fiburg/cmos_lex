@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.io.img_tiles as cimgt
-
+import datetime
 
 class Map(object):
     """
@@ -16,6 +16,30 @@ class Map(object):
     def __init__(self):
         self.extent = [11.202, 11.265, 54.472, 54.51]
         self.request = cimgt.OSM()  # OpenStreetMap
+
+        self.date = None
+        self.cloud_mask = None
+        self.cloud_height = None
+        self.sun_elevation = None
+        self.sun_azimuth = None
+
+    def load_cloud_mask(self, cloud_mask, cloud_height, date,
+                        sun_azimuth, sun_elevation):
+        """
+        Load the cloud mask in the class
+
+        Args:
+            cloud_mask:
+            cloud_height:
+            sun_azimuth:
+            sun_elevation:
+        """
+
+        self.cloud_mask = cloud_mask,
+        self.cloud_height = cloud_height
+        self.date = date
+        self.sun_azimuth = sun_azimuth
+        self.sun_elevation = sun_elevation
 
     def make_map(self, projection=ccrs.PlateCarree()):
         """
@@ -106,4 +130,22 @@ class Map(object):
 
 if __name__ == "__main__":
     map = Map()
-    map.plot_map()
+    #lat = np.linspace(11.24, 11.25, 100)
+    #lon = np.linspace(54.49, 54.50, 100)
+
+    #cloud, lat, lon
+    #cloud_mask = np.ones((100, 100, 3))
+
+    #lat = np.meshgrid(lat, lat)
+    #cloud_mask[:,:,1] = lat[0]
+
+    #lon = np.meshgrid(lon, lon)
+    #cloud_mask[:,:,2] = lon[0]
+
+
+    map.load_cloud_mask(cloud_mask,
+                        cloud_height=2840,
+                        date=datetime.datetime(year=2018, month=8, day=26, hour=14, minute=23, second=40),
+                        sun_azimuth=0,
+                        sun_elevation=0)
+    #map.plot_map()
