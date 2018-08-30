@@ -8,6 +8,7 @@ import datetime
 from pytz import timezone
 import scipy
 
+
 class SkyImager(Instrument):
     """
     Class to process the Allsky Images.
@@ -35,7 +36,7 @@ class SkyImager(Instrument):
         zurückgegeben.
 
         Args:
-            inputFile: str: Pfad und Name des Bildes
+            input_file: str: Pfad und Name des Bildes
             scale_factor: float: Skalierungsfaktor in %. 100=original, 50=halbe Pixelzahl.
 
         Returns:
@@ -71,7 +72,7 @@ class SkyImager(Instrument):
 
         filename = os.path.split(self.input_file)[-1]
         _date = "_".join(filename.split("_")[3:5])
-        self.date = dt.strptime(_date,"%Y%m%d_%H%M%S")
+        self.date = dt.strptime(_date, "%Y%m%d_%H%M%S")
         self.date = self.date - datetime.timedelta(hours=1)
         self.date.replace(tzinfo=timezone("UTC"))
 
@@ -79,15 +80,12 @@ class SkyImager(Instrument):
         """
         Find the position (x,y) of the center of an array.
 
-        Args:
-            img_array: array of the image
-
         Returns: tuple: center of the image.
         """
         center_x = int(np.divide(self.image.shape[0], 2))
         center_y = int(np.divide(self.image.shape[1], 2))
 
-        return (center_x,center_y)
+        return center_x, center_y
 
     def get_image_size(self):
         """
@@ -99,7 +97,7 @@ class SkyImager(Instrument):
         x_size = self.image.shape[0]
         y_size = self.image.shape[1]
 
-        return (x_size,y_size)
+        return x_size, y_size
 
     def crop_image(self, elevation=30):
         """
@@ -116,10 +114,10 @@ class SkyImager(Instrument):
         x_size, y_size = self.get_image_size()
         y, x = np.ogrid[-y_center:y_size - y_center, -x_center:x_size - x_center]
 
-        crop_size = x_size/2 - (x_size/2 / 90 * elevation)
+        crop_size = x_size / 2 - (x_size / 2 / 90 * elevation)
 
         center_mask = x ** 2 + y ** 2 <= (crop_size) ** 2
-        self.image[:,:,:][~center_mask] = [0,0,0]
+        self.image[:, :, :][~center_mask] = [0, 0, 0]
 
     def _read_lense_settings(self):
         pass
@@ -132,7 +130,6 @@ class SkyImager(Instrument):
         Returns:
 
         """
-
 
         image_f = self.image.astype(float)
 
@@ -159,10 +156,10 @@ class SkyImager(Instrument):
 
         """
         self.sun_elevation = pysolar.solar.get_altitude(latitude_deg=self.lat, longitude_deg=self.lon,
-                                   when=self.date, elevation=self.height)
+                                                        when=self.date, elevation=self.height)
 
         sun_azimuth = pysolar.solar.get_azimuth(latitude_deg=self.lat, longitude_deg=self.lon,
-                                   when=self.date, elevation=self.height)
+                                                when=self.date, elevation=self.height)
 
         if sun_azimuth < 0:
             if (sun_azimuth >= -180):
@@ -173,7 +170,6 @@ class SkyImager(Instrument):
                 solarheading = sun_azimuth
 
         self.sun_azimuth = solarheading
-
 
     def create_angle_array(self):
         """
@@ -196,28 +192,27 @@ class SkyImager(Instrument):
         """
         x_size, y_size = self.get_image_size()
 
-        angle_array = np.zeros([x_size,y_size,2])
+        angle_array = np.zeros([x_size, y_size, 2])
 
-        xx, yy = np.meshgrid(range(x_size),range(y_size), sparse=True)
+        xx, yy = np.meshgrid(range(x_size), range(y_size), sparse=True)
 
         x_dash = self._convert_var_to_dash(xx)
         y_dash = self._convert_var_to_dash(yy)
 
         # Azimuth angle:
-        angle_array[xx,yy,0] = SkyImager._azimuth_angle(x_dash,y_dash)
-        angle_array[:,:,0] = np.subtract(angle_array[:,:,0],90)
+        angle_array[xx, yy, 0] = SkyImager._azimuth_angle(x_dash, y_dash)
+        angle_array[:, :, 0] = np.subtract(angle_array[:, :, 0], 90)
         negative_mask = angle_array[:, :, 0] < 0
-        angle_array[:, :, 0][negative_mask] = np.add(angle_array[:, :, 0][negative_mask],360)
+        angle_array[:, :, 0][negative_mask] = np.add(angle_array[:, :, 0][negative_mask], 360)
 
         # Elevation angle:
-        angle_array[xx,yy,1] = self._elevation_angle(x_dash,y_dash)
-        angle_array[:,:,1] = np.subtract(angle_array[:,:,1],90)
-        angle_array[:,:,1] = np.negative(angle_array[:,:,1])
-
+        angle_array[xx, yy, 1] = self._elevation_angle(x_dash, y_dash)
+        angle_array[:, :, 1] = np.subtract(angle_array[:, :, 1], 90)
+        angle_array[:, :, 1] = np.negative(angle_array[:, :, 1])
 
         self.angle_array = angle_array
 
-    def pixel_to_ele_azi(self,x,y):
+    def pixel_to_ele_azi(self, x, y):
         """
         Method to get the azimuth and elevation of a single allsky-image pixel.
 
@@ -230,21 +225,20 @@ class SkyImager(Instrument):
         """
 
         x_dash = self._convert_var_to_dash(x)
-        y_dash= self._convert_var_to_dash(y)
+        y_dash = self._convert_var_to_dash(y)
 
-        azimuth = SkyImager._azimuth_angle(x_dash,y_dash)
+        azimuth = SkyImager._azimuth_angle(x_dash, y_dash)
         azimuth -= 90
-        if azimuth < 0 :
+        if azimuth < 0:
             azimuth += 360
 
-        elevation = self._elevation_angle(x_dash,y_dash)
+        elevation = self._elevation_angle(x_dash, y_dash)
         elevation -= 90
         elevation *= -1
 
-        return (azimuth, elevation)
+        return azimuth, elevation
 
-
-    def _convert_var_to_dash(self,var):
+    def _convert_var_to_dash(self, var):
         """
         This function converts a variable x or y to be dependent on the center:
 
@@ -260,9 +254,8 @@ class SkyImager(Instrument):
         a = self.get_image_size()[0] / 2
         return var - a
 
-
     @staticmethod
-    def _azimuth_angle(x_dash,y_dash):
+    def _azimuth_angle(x_dash, y_dash):
         """
         calculates the azimuth angle in the picture from coordinates x' and y'
 
@@ -275,10 +268,9 @@ class SkyImager(Instrument):
             azimuth angle alpha of the coordinates x' and y'.
 
         """
-        return np.rad2deg(np.arctan2(x_dash,y_dash))
+        return np.rad2deg(np.arctan2(x_dash, y_dash))
 
-
-    def _elevation_angle(self,x_dash,y_dash):
+    def _elevation_angle(self, x_dash, y_dash):
         """
         calculates the elevation angle in the picture from coordinates x' and y'
 
@@ -290,12 +282,12 @@ class SkyImager(Instrument):
             elevation angle epsilon of the coordinates x' and y'.
 
         """
-        a = self.get_image_size()[0]/2
-        r = SkyImager._calc_radius(x_dash,y_dash)
+        a = self.get_image_size()[0] / 2
+        r = SkyImager._calc_radius(x_dash, y_dash)
         return np.multiply(90, (1 - np.divide(r, a)))
 
     @staticmethod
-    def _calc_radius(x,y):
+    def _calc_radius(x, y):
         """
         calculates the radius from x and y:
 
@@ -308,10 +300,10 @@ class SkyImager(Instrument):
         Returns:
             radius r.
         """
-        return np.sqrt(np.power(x,2) + np.power(y,2))
+        return np.sqrt(np.power(x, 2) + np.power(y, 2))
 
     @staticmethod
-    def find_nearest_idx(array1,array2, value1,value2):
+    def find_nearest_idx(array1, array2, value1, value2):
         """
         finds the nearest coordinates in two array representing the azimuth and
         elevation.
@@ -330,7 +322,6 @@ class SkyImager(Instrument):
         idx = np.where(temp == temp.min())
         return idx
 
-
     def remove_sun(self):
         """
         Calculates the center of the sun inside the image
@@ -341,15 +332,10 @@ class SkyImager(Instrument):
         if not self.angle_array:
             self.create_angle_array()
 
+        sun_pos = self.find_nearest_idx(self.angle_array[:, :, 0], self.angle_array[:, :, 1],
+                                        self.sun_azimuth, self.sun_elevation)
 
-
-        sun_pos = self.find_nearest_idx(self.angle_array[:,:,0],self.angle_array[:,:,1],
-                                        self.sun_azimuth,self.sun_elevation)
-
-
-
-        ###-----------Draw circle around position of sun-------------------------------------------------------------------------------------------
-
+        #-----------Draw circle around position of sun--------------------------------------------------------------
 
         x_sol_cen = int(sun_pos[0])
         y_sol_cen = int(sun_pos[1])
@@ -358,27 +344,36 @@ class SkyImager(Instrument):
 
         x_size, y_size = self.get_image_size()
 
-
         y, x = np.ogrid[-y_sol_cen:y_size - y_sol_cen, -x_sol_cen:x_size - x_sol_cen]
         sol_mask = x ** 2 + y ** 2 <= Radius_sol ** 2
         sol_mask_cen = x ** 2 + y ** 2 <= Radius_sol_center ** 2
         sol_mask_cen1 = np.logical_xor(sol_mask_cen, sol_mask)
         self.image[:, :, :][sol_mask_cen1] = [0, 0, 0]
 
-
-
     def _rotate_image(self, deg):
-        self.image = scipy.ndimage.rotate(self.image,angle=deg)
+        self.image = scipy.ndimage.rotate(self.image, angle=deg)
 
     def _apply_rotation_calib(self):
         # self._rotate_image()
         pass
 
+    def hemisphere_to_plain(self, cbh):
+        # pass
 
-    def hemisphere_to_plain(self,cbh):
-        pass
-        # alpha, epsilon = self.pixel_to_ele_azi(x,y)
-        # r_hut = cbh * np.tan(np.deg2rad(90) - epsilon)
+        x_size, y_size = self.get_image_size()
 
+        self.new_coords = self.image[:, :, :2].copy()
+        self.new_coords[:, :,:] = np.nan
 
+        for x in range(x_size):
+            for y in range(y_size):
+                alpha, epsilon = self.pixel_to_ele_azi(x, y)
+                r_hut = cbh * np.tan(np.deg2rad(90) - np.deg2rad(epsilon))
 
+                x_hut = r_hut * np.sin(np.deg2rad(alpha))
+                y_hut = r_hut * np.cos(np.deg2rad(alpha))
+
+                print(alpha, epsilon, r_hut, x_hut, y_hut, x, y)
+
+                self.new_coords[x, y,0] = x_hut
+                self.new_coords[x, y, 0] = y_hut

@@ -1,6 +1,7 @@
 import cmos
 import matplotlib.pyplot as plt
 from scipy.ndimage import label
+import numpy as np
 
 file = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM2_JPG_20180826/LEX_WKM2_Image_20180826_152340_UTCp1.jpg"
 
@@ -19,7 +20,7 @@ print(sky_imager.sun_elevation,sky_imager.sun_azimuth)
 
 # print(sky_imager.angle_array)
 
-
+# sky_imager.hemisphere_to_plain(cbh=1000)
 
 fig, (ax1,ax2,ax3) = plt.subplots(ncols=3)
 ax1.imshow(sky_imager.original_image)
