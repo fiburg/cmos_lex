@@ -7,7 +7,6 @@ import datetime
 import numpy.ma as ma
 import matplotlib as mpl
 
-
 class Map(object):
     """
     Class to plot results on catropy map
@@ -19,7 +18,7 @@ class Map(object):
 
     def __init__(self):
         #self.extent = [11.202, 11.265, 54.472, 54.51]
-        self.extent = [11., 11.4, 54.4, 54.55]
+        self.extent = [11.15, 11.38, 54.43, 54.54]
         self.request = cimgt.OSM()  # OpenStreetMap
 
         self.date = None
@@ -117,7 +116,7 @@ class Map(object):
         ax.plot(bar_xs, [sby, sby], transform=tmc, color='k',
                 linewidth=linewidth)
 
-    def plot_map(self, plot_path='../plot/map.png', tile_resolution=10):
+    def plot_map(self, plot_path='../plot/map.png', tile_resolution=12):
         """
         Plot the map
 
@@ -129,27 +128,38 @@ class Map(object):
         fig, ax = self.make_map(projection=self.request.crs)
         ax.set_extent(self.extent)
         ax.add_image(self.request, tile_resolution)
-        self.add_scale_bar(ax, 1)
+        self.add_scale_bar(ax, 5)
         cmap = plt.cm.Greys
-        norm = mpl.colors.Normalize(vmin=0.1, vmax=1.)
-        # cmap.set_under(color='white', alpha=0.)
+        norm = mpl.colors.Normalize(vmin=0., vmax=1.)
 
-        self._calculate_shadow_offset()
+        wk_data = [('HQ',
+                    54.495071, 11.239483),
+                   ('West', 54.493931, 11.225459),
+                   ('Süd', 54.485390, 11.242269)]
 
-        #self.cloud_mask[:, :, 2][np.isnan(self.cloud_mask[:, :, 2])] = 5
-        #self.cloud_mask[:, :, 1][np.isnan(self.cloud_mask[:, :, 1])] = 5
-        #self.cloud_mask[:, :, 0][np.isnan(self.cloud_mask[:, :, 0])] = -999
-        plt.contourf(self.shadow_mask[550:1200, 550:1200, 2],
-                       self.shadow_mask[550:1200, 550:1200, 1],
-                       self.shadow_mask[550:1200, 550:1200, 0],
-                       transform=ccrs.PlateCarree(),
-                       # cmap=cmap,
-                       # norm=norm,
-                       # alpha=1)
-                     )
+        # Place a single marker point and a text annotation at each place.
+        for name, lat, lon in wk_data:
+            plt.plot(lon, lat, marker='x', markersize=9.0, markeredgewidth=2.5,
+                     color='red',
+                     transform=ccrs.PlateCarree())
+
+            at_x, at_y = ax.projection.transform_point(lon, lat,
+                                                       src_crs=ccrs.PlateCarree())
+
+
+        self.cloud_mask[:, :, 2][np.isnan(self.cloud_mask[:, :, 2])] = 5
+        self.cloud_mask[:, :, 1][np.isnan(self.cloud_mask[:, :, 1])] = 5
+        self.cloud_mask[:, :, 0][self.cloud_mask[:, :, 0] == 0] = np.nan
+        plt.contourf(self.cloud_mask[:, :, 2],
+                   self.cloud_mask[:, :, 1],
+                   self.cloud_mask[:, :, 0],
+                   transform=ccrs.PlateCarree(),
+                   cmap=cmap,
+                   norm=norm,
+                   alpha=0.6)
+
         plt.tight_layout()
-        plt.show()
-        # plt.savefig(plot_path)
+        plt.savefig(plot_path)
 
     def _calculate_shadow_offset(self):
         # Zuerst muss der "verschiebungsvektor ausgerechnet werden"
@@ -171,8 +181,6 @@ class Map(object):
         self.shadow_mask = self.cloud_mask.copy()
         self.shadow_mask[:,:,1] = final_latitude
         self.shadow_mask[:,:,2] = final_longitude
-
-
 
 if __name__ == "__main__":
     map = Map()
