@@ -27,6 +27,8 @@ sky_imager.create_lat_lon_array()
 sky_imager.create_lat_lon_cloud_mask()
 
 map = cmos.Map()
+
+print(sky_imager.lat_lon_cloud_mask[:,:,1])
 map.load_cloud_mask(sky_imager.lat_lon_cloud_mask,
                     cloud_height=sky_imager.cloud_height,
                     date=sky_imager.date,

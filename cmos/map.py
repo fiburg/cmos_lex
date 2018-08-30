@@ -4,6 +4,8 @@ from matplotlib.colors import Normalize
 import cartopy.crs as ccrs
 import cartopy.io.img_tiles as cimgt
 import datetime
+import numpy.ma as ma
+import matplotlib as mpl
 
 
 class Map(object):
@@ -16,7 +18,8 @@ class Map(object):
     """
 
     def __init__(self):
-        self.extent = [11.202, 11.265, 54.472, 54.51]
+        #self.extent = [11.202, 11.265, 54.472, 54.51]
+        self.extent = [11., 11.4, 54.4, 54.55]
         self.request = cimgt.OSM()  # OpenStreetMap
 
         self.date = None
@@ -113,7 +116,7 @@ class Map(object):
         ax.plot(bar_xs, [sby, sby], transform=tmc, color='k',
                 linewidth=linewidth)
 
-    def plot_map(self, plot_path='../plot/map.png', tile_resolution=12):
+    def plot_map(self, plot_path='../plot/map.png', tile_resolution=10):
         """
         Plot the map
 
@@ -126,15 +129,21 @@ class Map(object):
         ax.set_extent(self.extent)
         ax.add_image(self.request, tile_resolution)
         self.add_scale_bar(ax, 1)
-        cmap = plt.cm.Reds
-        plt.pcolormesh(self.cloud_mask[:, :, 2],
-                       self.cloud_mask[:, :, 1],
-                       self.cloud_mask[:, :, 0],
+        cmap = plt.cm.Greys
+        norm = mpl.colors.Normalize(vmin=0.1, vmax=1.)
+        cmap.set_under(color='white', alpha=0.)
+
+        #self.cloud_mask[:, :, 2][np.isnan(self.cloud_mask[:, :, 2])] = 5
+        #self.cloud_mask[:, :, 1][np.isnan(self.cloud_mask[:, :, 1])] = 5
+        #self.cloud_mask[:, :, 0][np.isnan(self.cloud_mask[:, :, 0])] = -999
+        plt.pcolormesh(self.cloud_mask[550:1200, 550:1200, 2],
+                       self.cloud_mask[550:1200, 550:1200, 1],
+                       self.cloud_mask[550:1200, 550:1200, 0],
                        transform=ccrs.PlateCarree(),
                        cmap=cmap,
-                       alpha=0.6,
-                       vmin=0.,
-                       vmax=2.)
+                       norm=norm,
+                       alpha=0.4)
+
         plt.tight_layout()
         plt.savefig(plot_path)
 
