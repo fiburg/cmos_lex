@@ -24,9 +24,10 @@ class Map(object):
 
         self.date = None
         self.cloud_mask = None
+        self.shadow_mask = None
         self.cloud_height = None
-        self.sun_elevation = None
         self.sun_azimuth = None
+        self.sun_elevation = None
 
     def load_cloud_mask(self, cloud_mask, cloud_height, date,
                         sun_azimuth, sun_elevation):
@@ -131,21 +132,46 @@ class Map(object):
         self.add_scale_bar(ax, 1)
         cmap = plt.cm.Greys
         norm = mpl.colors.Normalize(vmin=0.1, vmax=1.)
-        cmap.set_under(color='white', alpha=0.)
+        # cmap.set_under(color='white', alpha=0.)
+
+        self._calculate_shadow_offset()
 
         #self.cloud_mask[:, :, 2][np.isnan(self.cloud_mask[:, :, 2])] = 5
         #self.cloud_mask[:, :, 1][np.isnan(self.cloud_mask[:, :, 1])] = 5
         #self.cloud_mask[:, :, 0][np.isnan(self.cloud_mask[:, :, 0])] = -999
-        plt.pcolormesh(self.cloud_mask[550:1200, 550:1200, 2],
-                       self.cloud_mask[550:1200, 550:1200, 1],
-                       self.cloud_mask[550:1200, 550:1200, 0],
+        plt.contourf(self.shadow_mask[550:1200, 550:1200, 2],
+                       self.shadow_mask[550:1200, 550:1200, 1],
+                       self.shadow_mask[550:1200, 550:1200, 0],
                        transform=ccrs.PlateCarree(),
-                       cmap=cmap,
-                       norm=norm,
-                       alpha=0.4)
-
+                       # cmap=cmap,
+                       # norm=norm,
+                       # alpha=1)
+                     )
         plt.tight_layout()
-        plt.savefig(plot_path)
+        plt.show()
+        # plt.savefig(plot_path)
+
+    def _calculate_shadow_offset(self):
+        # Zuerst muss der "verschiebungsvektor ausgerechnet werden"
+
+        dist = np.multiply(np.tan(np.deg2rad(self.sun_elevation)), self.cloud_height)
+
+        dx = np.multiply(dist,
+                         np.sin(np.deg2rad(self.sun_azimuth + 180)))  # +180 because of counter direction to sun azimuth
+        dy = np.multiply(dist, np.cos(np.deg2rad(self.sun_azimuth+ 180)))  # dx, dy same units as R
+
+        delta_longitude = np.divide(dx, (np.multiply(111320, np.cos(np.deg2rad(self.cloud_mask[:,:,1])))))  # dx, dy in meters
+        delta_latitude = np.divide(dy, 110540)  # result in degrees long / lat
+
+        # print("DELTA LATLON: ", np.min(delta_latitude),np.min(delta_longitude))
+
+        final_longitude = np.add(self.cloud_mask[:,:,2], delta_longitude)
+        final_latitude = np.add(self.cloud_mask[:,:,1], delta_latitude)
+
+        self.shadow_mask = self.cloud_mask.copy()
+        self.shadow_mask[:,:,1] = final_latitude
+        self.shadow_mask[:,:,2] = final_longitude
+
 
 
 if __name__ == "__main__":

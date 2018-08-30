@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.ndimage import label
 import numpy as np
 
+
 file = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM2_JPG_20180826/LEX_WKM2_Image_20180826_152340_UTCp1.jpg"
 
 sky_imager = cmos.SkyImager("hq")
@@ -28,12 +29,12 @@ ax3.imshow(sky_imager.cloud_mask[:,:])
 plt.show()
 
 fig1, (ax1,ax2) = plt.subplots(ncols=2)
-im = ax1.imshow(sky_imager.lat_lon_array[:,:,0])
+im = ax1.imshow(sky_imager.angle_array[:,:,0])
 fig1.colorbar(im,ax=ax1)
-ax1.set_title("Latitude", fontsize=25)
+ax1.set_title("Azimuth", fontsize=25)
 
-im2 = ax2.imshow(sky_imager.lat_lon_array[:,:,1])
+im2 = ax2.imshow(sky_imager.angle_array[:,:,1])
 fig1.colorbar(im2,ax=ax2)
-ax2.set_title("Longitude", fontsize=25)
+ax2.set_title("Zenith", fontsize=25)
 plt.show()
 

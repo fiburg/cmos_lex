@@ -214,22 +214,22 @@ class SkyImager(Instrument):
 
         dist = np.multiply(np.tan(np.deg2rad(self.angle_array[:,:,1])),self.cloud_height)
 
-        print("DIST: ", np.min(dist))
+        # print("DIST: ", np.min(dist))
 
         dx = np.multiply(dist, np.sin(np.deg2rad(self.angle_array[:,:,0]))) # azimuth measured clockwise from due north
         dy = np.multiply(dist, np.cos(np.deg2rad(self.angle_array[:,:,0]))) # dx, dy same units as R
 
-        print("DX DY: ", np.min(dx), np.min(dy))
+        # print("DX DY: ", np.min(dx), np.min(dy))
 
         delta_longitude = np.divide(dx, (np.multiply(111320, np.cos(np.deg2rad(self.lat)))) )#dx, dy in meters
         delta_latitude = np.divide(dy, 110540) # result in degrees long / lat
 
-        print("DELTA LATLON: ", np.min(delta_latitude),np.min(delta_longitude))
+        # print("DELTA LATLON: ", np.min(delta_latitude),np.min(delta_longitude))
 
         final_longitude = np.add(self.lon, delta_longitude)
         final_latitude = np.add(self.lat, delta_latitude)
 
-        print("FINAL LATLON: ", np.min(final_latitude), np.min(final_longitude))
+        # print("FINAL LATLON: ", np.min(final_latitude), np.min(final_longitude))
 
         self.lat_lon_array = self.image[:,:,:2].copy().astype(float)
         self.lat_lon_array[:,:,:] = np.nan
