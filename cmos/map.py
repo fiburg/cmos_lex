@@ -1,8 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import Normalize
 import cartopy.crs as ccrs
 import cartopy.io.img_tiles as cimgt
 import datetime
+
 
 class Map(object):
     """
@@ -35,7 +37,7 @@ class Map(object):
             sun_elevation:
         """
 
-        self.cloud_mask = cloud_mask,
+        self.cloud_mask = cloud_mask
         self.cloud_height = cloud_height
         self.date = date
         self.sun_azimuth = sun_azimuth
@@ -124,28 +126,39 @@ class Map(object):
         ax.set_extent(self.extent)
         ax.add_image(self.request, tile_resolution)
         self.add_scale_bar(ax, 1)
+        cmap = plt.cm.Reds
+        plt.pcolormesh(self.cloud_mask[:, :, 2],
+                       self.cloud_mask[:, :, 1],
+                       self.cloud_mask[:, :, 0],
+                       transform=ccrs.PlateCarree(),
+                       cmap=cmap,
+                       alpha=0.6,
+                       vmin=0.,
+                       vmax=2.)
         plt.tight_layout()
         plt.savefig(plot_path)
 
 
 if __name__ == "__main__":
     map = Map()
-    #lat = np.linspace(11.24, 11.25, 100)
-    #lon = np.linspace(54.49, 54.50, 100)
+    lat = np.linspace(11.24, 11.25, 100)
+    lon = np.linspace(54.49, 54.50, 100)
 
     #cloud, lat, lon
-    #cloud_mask = np.ones((100, 100, 3))
+    cloud_mask = np.ones((100, 100, 3))
 
-    #lat = np.meshgrid(lat, lat)
-    #cloud_mask[:,:,1] = lat[0]
+    lat = np.meshgrid(lat, lat)
+    cloud_mask[:,:,2] = lat[0]
 
-    #lon = np.meshgrid(lon, lon)
-    #cloud_mask[:,:,2] = lon[0]
+    lon = np.meshgrid(lon, lon)
+    cloud_mask[:,:,1] = np.swapaxes(lon[0], 0, 1)
 
+    #print(cloud_mask[:,:,1])
 
     map.load_cloud_mask(cloud_mask,
                         cloud_height=2840,
-                        date=datetime.datetime(year=2018, month=8, day=26, hour=14, minute=23, second=40),
+                        date=datetime.datetime(year=2018, month=8, day=26),
                         sun_azimuth=0,
                         sun_elevation=0)
-    #map.plot_map()
+
+    map.plot_map()
