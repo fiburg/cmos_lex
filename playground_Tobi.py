@@ -4,7 +4,7 @@ from scipy.ndimage import label
 import numpy as np
 import glob
 
-file = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM2_JPG_20180826/LEX_WKM2_Image_20180826_181040_UTCp1.jpg"
+file = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM2_JPG_20180826/LEX_WKM2_Image_20180826_151040_UTCp1.jpg"
 # files = "W:/Aufzeichnung/wkm2/jpg/LEX_WKM2_Image_*_UTCp1.jpg"
 # file = sorted(glob.glob(files))[-1]
 
