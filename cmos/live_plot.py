@@ -26,24 +26,28 @@ def live_plot(output_path, image_folder):
         print(file)
 
         sky_imager = cmos.SkyImager("hq")
-        sky_imager.load_image(file,cloud_height=500)
+        sky_imager.load_image(file, cloud_height=500)
 
         print(sky_imager.date)
         print(sky_imager.height)
-        print(sky_imager.sun_elevation,sky_imager.sun_azimuth)
+        print(sky_imager.sun_elevation, sky_imager.sun_azimuth)
 
         sky_imager.create_lat_lon_array()
         sky_imager.create_lat_lon_cloud_mask()
 
         map = cmos.Map()
 
-        print(sky_imager.lat_lon_cloud_mask[:,:,1])
-        map.load_cloud_mask(sky_imager.lat_lon_cloud_mask,
-                            cloud_height=sky_imager.cloud_height,
-                            date=sky_imager.date,
-                            sun_azimuth=sky_imager.sun_azimuth,
-                            sun_elevation=sky_imager.sun_elevation)
-        map.plot_map(output_path)
+        map.make_map()
+        map.set_positional_data(date=sky_imager.date,
+                                cloud_height=sky_imager.cloud_height,
+                                sun_azimuth=sky_imager.sun_azimuth,
+                                sun_elevation=sky_imager.sun_elevation)
+        map.add_shadows(sky_imager.lat_lon_cloud_mask)
+        map.add_clouds(sky_imager.lat_lon_cloud_mask)
+        map.add_station_marker(sky_imager.instrument_name, sky_imager.lat, sky_imager.lon)
+        map.add_setting_title('CMOS - Clouds and shadows - HQ sky imager')
+        map.save_plot(output_path)
+
         # plt.show()
         print("sleeping")
         time.sleep(60)
