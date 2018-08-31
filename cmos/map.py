@@ -1,11 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.colors import Normalize
 import cartopy.crs as ccrs
 import cartopy.io.img_tiles as cimgt
 import datetime
-import numpy.ma as ma
-import matplotlib as mpl
 
 class Map(object):
     """
@@ -16,86 +13,71 @@ class Map(object):
         request : image tile (eg. OpenStreetMap or GoogleMaps)
     """
 
-    def __init__(self):
-        #self.extent = [11.202, 11.265, 54.472, 54.51]
-        self.extent = [11.15, 11.38, 54.43, 54.54]
+    def __init__(self, lat_min=11.18, lat_max=11.32, lon_min=54.46, lon_max=54.53):
+        self.extent = [lat_min, lat_max, lon_min, lon_max]
         self.request = cimgt.OSM()  # OpenStreetMap
 
+        self.fig = None
+        self.ax = None
         self.date = None
-        self.cloud_mask = None
-        self.shadow_mask = None
         self.cloud_height = None
         self.sun_azimuth = None
         self.sun_elevation = None
 
-    def load_cloud_mask(self, cloud_mask, cloud_height, date,
-                        sun_azimuth, sun_elevation):
+    def set_positional_data(self, date, cloud_height,
+                            sun_azimuth, sun_elevation):
         """
-        Load the cloud mask in the class
+        Sets positional datas for current map.
 
         Args:
-            cloud_mask:
-            cloud_height:
-            sun_azimuth:
-            sun_elevation:
+            date: datetime object of actual timestep
+            cloud_height: cloud height for `date`
+            sun_azimuth: azimuth of sun
+            sun_elevation: elevation of sun
         """
-
-        self.cloud_mask = cloud_mask
-        self.cloud_height = cloud_height
         self.date = date
+        self.cloud_height = cloud_height
         self.sun_azimuth = sun_azimuth
         self.sun_elevation = sun_elevation
 
-    def make_map(self, projection=ccrs.PlateCarree()):
+    def _make_fig(self, projection=ccrs.PlateCarree()):
         """
-        Make the map to plot
+        Creates the figure of the plot
 
         Args:
             projection: catropy projection
-
-        Returns:
-            fig : matplotlib figure
-            ax : matplotlib ax
         """
 
-        fig, ax = plt.subplots(figsize=(8, 8),
+        self.fig, self.ax = plt.subplots(figsize=(8, 8),
                                subplot_kw=dict(projection=projection))
-        # gl = ax.gridlines(draw_labels=True)
-        # gl.xlabels_top = gl.ylabels_right = False
-        return fig, ax
 
-    def add_scale_bar(self,
-                      ax, length=None, location=(0.75, 0.95), linewidth=3):
+    def _add_scale_bar(self,
+                      ax, length=None, location=(0.9, 0.05), linewidth=3):
         """
-        CITATION...
-        ax is the axes to draw the scalebar on.
-        length is the length of the scalebar in km.
-        location is center of the scalebar in axis coordinates.
-        (ie. 0.5 is the middle of the plot)
-        linewidth is the thickness of the scalebar.
+        Adds scale bar to the image.
+
+        Args:
+            ax : axes to draw the scalebar on.
+            length : length of the scalebar in km
+            location : center of the scalebar in axis coordinates.
+                (ie. 0.5 is the middle of the plot)
+            linewidth : thickness of the scalebar.
         """
-        # Get the limits of the axis in lat long
+
         llx0, llx1, lly0, lly1 = ax.get_extent(ccrs.PlateCarree())
-        # Make tmc horizontally centred on the middle of the map,
-        # vertically at scale bar location
         sbllx = (llx1 + llx0) / 2
         sblly = lly0 + (lly1 - lly0) * location[1]
         tmc = ccrs.TransverseMercator(sbllx, sblly)
-        # Get the extent of the plotted area in coordinates in metres
         x0, x1, y0, y1 = ax.get_extent(tmc)
-        # Turn the specified scalebar location into coordinates in metres
         sbx = x0 + (x1 - x0) * location[0]
         sby = y0 + (y1 - y0) * location[1]
 
-        # Calculate a scale bar length if none has been given
-        # (Theres probably a more pythonic way of rounding the number but this works)
         if not length:
             length = (x1 - x0) / 5000  # in km
             ndim = int(
                 np.floor(np.log10(length)))  # number of digits in number
             length = round(length, -ndim)  # round to 1sf
 
-            # Returns numbers starting with the list
             def scale_number(x):
                 if str(x)[0] in ['1', '2', '5']:
                     return int(x)
@@ -104,105 +86,146 @@ class Map(object):
 
             length = scale_number(length)
 
-        # Generate the x coordinate for the ends of the scalebar
         bar_xs = [sbx - length * 500, sbx + length * 500]
 
-        # Plot the scalebar label
         ax.text(sbx, sby, str(length) + ' km', size=14, transform=tmc,
                 horizontalalignment='center', color='k',
                 verticalalignment='bottom')
 
-        # Plot the scalebar
         ax.plot(bar_xs, [sby, sby], transform=tmc, color='k',
                 linewidth=linewidth)
 
-    def plot_map(self, plot_path='../plot/map.png', tile_resolution=12):
+    def make_map(self, tile_resolution=12):
         """
-        Plot the map
+        Adds the land map to the figure.
 
         Args:
-            plot_path: map path
-            tile_resolution: resolution (max 19)
+            tile_resolution: resolution of map details (max=19)
         """
 
-        fig, ax = self.make_map(projection=self.request.crs)
-        ax.set_extent(self.extent)
-        ax.add_image(self.request, tile_resolution)
-        self.add_scale_bar(ax, 5)
-        cmap = plt.cm.Greys
-        norm = mpl.colors.Normalize(vmin=0., vmax=1.)
+        self._make_fig(projection=self.request.crs)
+        self.ax.set_extent(self.extent)
+        self.ax.add_image(self.request, tile_resolution)
+        self._add_scale_bar(self.ax, 1)
 
-        wk_data = [('HQ',
-                    54.495071, 11.239483),
-                   ('West', 54.493931, 11.225459),
-                   ('Süd', 54.485390, 11.242269)]
+    def add_clouds(self, cloud_mask, cmap="Greys", vmin=1., vmax=2.):
+        """
+        Add the cloud mask to the map.
 
-        # Place a single marker point and a text annotation at each place.
-        for name, lat, lon in wk_data:
-            plt.plot(lon, lat, marker='x', markersize=9.0, markeredgewidth=2.5,
-                     color='red',
-                     transform=ccrs.PlateCarree())
+        Args:
+            cloud_mask: cloud mask 3dim array with cloud mask values,
+                lats and lons
+            cmap: string of desired colormap
+            vmin: minimal value of cmap
+            vmax: maximal value of cmap
+        """
 
-            at_x, at_y = ax.projection.transform_point(lon, lat,
-                                                       src_crs=ccrs.PlateCarree())
+        cloud_mask[:, :, 0][cloud_mask[:, :, 0] == 0] = np.nan
+        plt.contourf(cloud_mask[:, :, 2],
+                     cloud_mask[:, :, 1],
+                     cloud_mask[:, :, 0],
+                     transform=ccrs.PlateCarree(),
+                     cmap=cmap,
+                     vmin=vmin,
+                     vmax=vmax,
+                     alpha=0.9)
 
+    def add_shadows(self, cloud_mask, cmap="Greys", vmin=0., vmax=1.):
+        """
+        Adds the shadow mask to the map. The shadow mask is calculated
+        by sun position and cloud mask.
 
+        Args:
+            cloud_mask: cloud mask 3dim array with cloud mask values,
+                lats and lons
+            cmap: string of desired colormap
+            vmin: minimal value of cmap
+            vmax: maximal value of cmap
+        """
 
-        self.cloud_mask[:, :, 0][self.cloud_mask[:, :, 0] == 0] = np.nan
-        self._calculate_shadow_offset()
+        cloud_mask[:, :, 0][cloud_mask[:, :, 0] == 0] = np.nan
+        shadow_mask = self._calculate_shadow_offset(cloud_mask)
+        plt.contourf(shadow_mask[:, :, 2],
+                     shadow_mask[:, :, 1],
+                     shadow_mask[:, :, 0],
+                     transform=ccrs.PlateCarree(),
+                     cmap=cmap,
+                     vmin=vmin,
+                     vmax=vmax,
+                     alpha=0.7)
 
-        plt.contourf(self.shadow_mask[:, :, 2],
-                   self.shadow_mask[:, :, 1],
-                   self.shadow_mask[:, :, 0],
-                   transform=ccrs.PlateCarree(),
-                   cmap=cmap,
-                   norm=norm,
-                   alpha=0.6)
+    def add_station_marker(self, name, lat, lon, color='red', marker='o', marker_size=14):
+        """
+        Adds the station marker (eg. for the sky imager at headquarter).
 
-        plt.tight_layout()
-        plt.savefig(plot_path)
+        Args:
+            name : station name
+            lat : latitude
+            lon : longitude
+            color : color
+            marker : marker
 
-    def _calculate_shadow_offset(self):
-        # Zuerst muss der "verschiebungsvektor ausgerechnet werden"
+        Returns:
 
+        """
+        plt.plot(lon, lat, marker=marker, markersize=marker_size, markeredgewidth=2.5,
+                 color=color,
+                 transform=ccrs.PlateCarree())
+
+    def _calculate_shadow_offset(self, cloud_mask):
+        """
+        Calculation of the shadow map - the projection of the cloud mask in
+        relation to the sun position.
+
+        Args:
+            cloud_mask: cloud mask
+
+        Returns:
+            shadow_mask: shadow map
+        """
         dist = np.multiply(np.tan(np.deg2rad(self.sun_elevation)), self.cloud_height)
 
         dx = np.multiply(dist,
                          np.sin(np.deg2rad(self.sun_azimuth + 180)))  # +180 because of counter direction to sun azimuth
         dy = np.multiply(dist, np.cos(np.deg2rad(self.sun_azimuth+ 180)))  # dx, dy same units as R
 
-        delta_longitude = np.divide(dx, (np.multiply(111320, np.cos(np.deg2rad(self.cloud_mask[:,:,1])))))  # dx, dy in meters
+        delta_longitude = np.divide(dx, (np.multiply(111320, np.cos(np.deg2rad(cloud_mask[:,:,1])))))  # dx, dy in meters
         delta_latitude = np.divide(dy, 110540)  # result in degrees long / lat
 
-        # print("DELTA LATLON: ", np.min(delta_latitude),np.min(delta_longitude))
+        final_longitude = np.add(cloud_mask[:,:,2], delta_longitude)
+        final_latitude = np.add(cloud_mask[:,:,1], delta_latitude)
 
-        final_longitude = np.add(self.cloud_mask[:,:,2], delta_longitude)
-        final_latitude = np.add(self.cloud_mask[:,:,1], delta_latitude)
+        shadow_mask = cloud_mask.copy()
+        shadow_mask[:,:,1] = final_latitude
+        shadow_mask[:,:,2] = final_longitude
 
-        self.shadow_mask = self.cloud_mask.copy()
-        self.shadow_mask[:,:,1] = final_latitude
-        self.shadow_mask[:,:,2] = final_longitude
+        return shadow_mask
 
-if __name__ == "__main__":
-    map = Map()
-    lat = np.linspace(11.24, 11.25, 100)
-    lon = np.linspace(54.49, 54.50, 100)
+    def add_setting_title(self, text, size=14):
+        """
+        Sets title to map.
 
-    #cloud, lat, lon
-    cloud_mask = np.ones((100, 100, 3))
+        Args:
+            text: string
+            size: font size
+        """
+        plt.title((text+' - '+self.date.strftime('%m.%d.%Y %H:%M:%S')), size=size)
 
-    lat = np.meshgrid(lat, lat)
-    cloud_mask[:,:,2] = lat[0]
+    def save_plot(self, plot_path='./map.png', dpi=600):
+        """
+        Saves the plot to file.
 
-    lon = np.meshgrid(lon, lon)
-    cloud_mask[:,:,1] = np.swapaxes(lon[0], 0, 1)
+        Args:
+            plot_path: string of plotting path
+        """
 
-    #print(cloud_mask[:,:,1])
+        plt.tight_layout()
+        plt.savefig(plot_path, dpi=dpi)
 
-    map.load_cloud_mask(cloud_mask,
-                        cloud_height=2840,
-                        date=datetime.datetime(year=2018, month=8, day=26),
-                        sun_azimuth=0,
-                        sun_elevation=0)
+    def show_plot(self):
+        """
+        Shows the plot.
+        """
 
-    map.plot_map()
+        plt.tight_layout()
+        plt.show()
