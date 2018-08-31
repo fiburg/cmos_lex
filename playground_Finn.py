@@ -28,11 +28,14 @@ sky_imager.create_lat_lon_cloud_mask()
 
 map = cmos.Map()
 
-print(sky_imager.lat_lon_cloud_mask[:,:,1])
-map.load_cloud_mask(sky_imager.lat_lon_cloud_mask,
-                    cloud_height=sky_imager.cloud_height,
-                    date=sky_imager.date,
-                    sun_azimuth=sky_imager.sun_azimuth,
-                    sun_elevation=sky_imager.sun_elevation)
-map.plot_map("./plot/map.png")
+map.make_map()
+map.set_positional_data(date=sky_imager.date,
+                        cloud_height=sky_imager.cloud_height,
+                        sun_azimuth=sky_imager.sun_azimuth,
+                        sun_elevation=sky_imager.sun_elevation)
+map.add_shadows(sky_imager.lat_lon_cloud_mask)
+map.add_clouds(sky_imager.lat_lon_cloud_mask)
+map.add_station_marker(sky_imager.instrument_name, sky_imager.lat, sky_imager.lon)
+map.add_setting_title('CMOS - Clouds and shadows - HQ sky imager')
+map.save_plot("./plot/map.png")
 
