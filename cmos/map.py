@@ -147,12 +147,13 @@ class Map(object):
                                                        src_crs=ccrs.PlateCarree())
 
 
-        self.cloud_mask[:, :, 2][np.isnan(self.cloud_mask[:, :, 2])] = 5
-        self.cloud_mask[:, :, 1][np.isnan(self.cloud_mask[:, :, 1])] = 5
+
         self.cloud_mask[:, :, 0][self.cloud_mask[:, :, 0] == 0] = np.nan
-        plt.contourf(self.cloud_mask[:, :, 2],
-                   self.cloud_mask[:, :, 1],
-                   self.cloud_mask[:, :, 0],
+        self._calculate_shadow_offset()
+
+        plt.contourf(self.shadow_mask[:, :, 2],
+                   self.shadow_mask[:, :, 1],
+                   self.shadow_mask[:, :, 0],
                    transform=ccrs.PlateCarree(),
                    cmap=cmap,
                    norm=norm,

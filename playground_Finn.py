@@ -14,7 +14,7 @@ import numpy as np
 #    sun_position = sky_imager_corr.find_sun(path)
 #    print(sun_position)
 
-file = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM2_JPG_20180826/LEX_WKM2_Image_20180826_152340_UTCp1.jpg"
+file = "/home/fibu/Studium/18_SoSe/Lehrexkursion/cmos_lex/data/img/LEX_WKM2_Image_20180826_152340_UTCp1.jpg"
 
 sky_imager = cmos.SkyImager("hq")
 sky_imager.load_image(file,cloud_height=2840)
