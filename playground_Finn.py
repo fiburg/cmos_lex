@@ -14,29 +14,45 @@ import numpy as np
 #    sun_position = sky_imager_corr.find_sun(path)
 #    print(sun_position)
 
-# file = "/home/fibu/Studium/18_SoSe/Lehrexkursion/cmos_lex/data/img/LEX_WKM2_Image_20180826_152340_UTCp1.jpg"
-file = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM2_JPG_20180826/LEX_WKM2_Image_20180826_152340_UTCp1.jpg"
 
-sky_imager = cmos.SkyImager("hq")
-sky_imager.load_image(file,cloud_height=500)
+#file = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM2_JPG_20180826/LEX_WKM2_Image_20180826_152340_UTCp1.jpg"
+#
 
-print(sky_imager.date)
-print(sky_imager.height)
-print(sky_imager.sun_elevation,sky_imager.sun_azimuth)
 
-sky_imager.create_lat_lon_array()
-sky_imager.create_lat_lon_cloud_mask()
+cloud_height = 2840
 
-map = cmos.Map()
+file = "/home/fibu/Studium/18_SoSe/Lehrexkursion/cmos_lex/data/img/LEX_WKM2_Image_20180826_152340_UTCp1.jpg"
+skyim_hq = cmos.SkyImager("hq")
+skyim_hq.load_image(file,cloud_height=cloud_height)
+skyim_hq.create_lat_lon_cloud_mask()
 
+file = "/home/fibu/Studium/18_SoSe/Lehrexkursion/cmos_lex/data/img/LEX_WKM3_Image_20180826_152340_UTCp1.jpg"
+skyim_west = cmos.SkyImager("west")
+skyim_west.load_image(file,cloud_height=cloud_height)
+skyim_west.create_lat_lon_cloud_mask()
+
+file = "/home/fibu/Studium/18_SoSe/Lehrexkursion/cmos_lex/data/img/LEX_WKM4_Image_20180826_152340_UTCp1.jpg"
+skyim_south = cmos.SkyImager("south")
+skyim_south.load_image(file,cloud_height=cloud_height)
+skyim_south.create_lat_lon_cloud_mask()
+
+map = cmos.Map(lat_min=11.18, lat_max=11.35, lon_min=54.44, lon_max=54.53)
 map.make_map()
-map.set_positional_data(date=sky_imager.date,
-                        cloud_height=sky_imager.cloud_height,
-                        sun_azimuth=sky_imager.sun_azimuth,
-                        sun_elevation=sky_imager.sun_elevation)
-map.add_shadows(sky_imager.lat_lon_cloud_mask)
-map.add_clouds(sky_imager.lat_lon_cloud_mask)
-map.add_station_marker(sky_imager.instrument_name, sky_imager.lat, sky_imager.lon)
-map.add_setting_title('CMOS - Clouds and shadows - HQ sky imager')
-map.save_plot("./map.png")
+map.set_positional_data(date=skyim_hq.date,
+                        cloud_height=skyim_hq.cloud_height,
+                        sun_azimuth=skyim_hq.sun_azimuth,
+                        sun_elevation=skyim_hq.sun_elevation)
+
+
+map.add_clouds(skyim_hq.lat_lon_cloud_mask, "Reds", vmin=0.)
+map.add_station_marker(skyim_hq.instrument_name, skyim_hq.lat, skyim_hq.lon, color='red')
+
+map.add_clouds(skyim_west.lat_lon_cloud_mask, "Blues", vmin=0.)
+map.add_station_marker(skyim_west.instrument_name, skyim_west.lat, skyim_west.lon, color='blue')
+
+map.add_clouds(skyim_south.lat_lon_cloud_mask, "Greens", vmin=0.)
+map.add_station_marker(skyim_south.instrument_name, skyim_south.lat, skyim_south.lon, color= 'green')
+
+map.add_setting_title('CMOS - Shadow map - HQ, West, South')
+map.save_plot("./plot/shadow_map.png")
 
