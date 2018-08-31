@@ -121,7 +121,7 @@ class Map(object):
         """
 
         cloud_mask[:, :, 0][cloud_mask[:, :, 0] == 0] = np.nan
-        plt.contourf(cloud_mask[:, :, 2],
+        cloud = plt.contourf(cloud_mask[:, :, 2],
                      cloud_mask[:, :, 1],
                      cloud_mask[:, :, 0],
                      transform=ccrs.PlateCarree(),
@@ -145,7 +145,7 @@ class Map(object):
 
         cloud_mask[:, :, 0][cloud_mask[:, :, 0] == 0] = np.nan
         shadow_mask = self._calculate_shadow_offset(cloud_mask)
-        plt.contourf(shadow_mask[:, :, 2],
+        shadow = plt.contourf(shadow_mask[:, :, 2],
                      shadow_mask[:, :, 1],
                      shadow_mask[:, :, 0],
                      transform=ccrs.PlateCarree(),
@@ -218,7 +218,7 @@ class Map(object):
         Args:
             plot_path: string of plotting path
         """
-
+        print("Plot: Saves figure...")
         plt.tight_layout()
         plt.savefig(plot_path, dpi=dpi)
 
@@ -229,3 +229,12 @@ class Map(object):
 
         plt.tight_layout()
         plt.show()
+
+    def remove_sky_values(self):
+        """
+        Removes the clouds and shadows from the map, so you can plot
+        the next values without downloading the background map again.
+        """
+        print("Plot: Removes sky values...")
+        for coll in plt.gca().collections:
+            coll.remove()
