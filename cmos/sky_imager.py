@@ -294,6 +294,7 @@ class SkyImager(Instrument):
         angle_array[:, :, 0] = np.subtract(angle_array[:, :, 0], 90)
         negative_mask = angle_array[:, :, 0] < 0
         angle_array[:, :, 0][negative_mask] = np.add(angle_array[:, :, 0][negative_mask], 360)
+        angle_array = np.fliplr(angle_array)
 
         # Elevation angle:
         angle_array[xx, yy, 1] = self._elevation_angle(x_dash, y_dash)

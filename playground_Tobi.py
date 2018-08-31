@@ -2,9 +2,11 @@ import cmos
 import matplotlib.pyplot as plt
 from scipy.ndimage import label
 import numpy as np
+import glob
 
-
-file = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM2_JPG_20180826/LEX_WKM2_Image_20180826_152340_UTCp1.jpg"
+# file = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM2_JPG_20180826/LEX_WKM2_Image_20180826_152340_UTCp1.jpg"
+files = "W:/Aufzeichnung/wkm2/jpg/LEX_WKM2_Image_*_UTCp1.jpg"
+file = sorted(glob.glob(files))[-1]
 
 sky_imager = cmos.SkyImager("hq")
 sky_imager.load_image(file,cloud_height=2840)

@@ -1,0 +1,7 @@
+include README.md
+include _version.py
+
+recursive-include cmos *.ini
+
+recursive-include cmos/data *.ini
+
