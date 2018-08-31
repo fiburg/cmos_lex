@@ -90,7 +90,7 @@ class SkyImager(Instrument):
         _date = "_".join(filename.split("_")[3:5])
         self.date = dt.strptime(_date, "%Y%m%d_%H%M%S")
         self.date = self.date - datetime.timedelta(hours=1)
-        self.date.replace(tzinfo=timezone("UTC"))
+        self.date = self.date.replace(tzinfo=timezone("UTC"))
 
     def find_center(self):
         """
@@ -261,6 +261,7 @@ class SkyImager(Instrument):
 
         self.sun_azimuth = solarheading
 
+
     def create_angle_array(self):
         """
         Creates an array in which the azimuth and elevation angles are the values
@@ -294,7 +295,7 @@ class SkyImager(Instrument):
         angle_array[:, :, 0] = np.subtract(angle_array[:, :, 0], 90)
         negative_mask = angle_array[:, :, 0] < 0
         angle_array[:, :, 0][negative_mask] = np.add(angle_array[:, :, 0][negative_mask], 360)
-        angle_array = np.fliplr(angle_array)
+        # angle_array = np.fliplr(angle_array)
 
         # Elevation angle:
         angle_array[xx, yy, 1] = self._elevation_angle(x_dash, y_dash)
@@ -302,6 +303,9 @@ class SkyImager(Instrument):
         angle_array[:, :, 1] = np.negative(angle_array[:, :, 1])
 
         self.angle_array = self.crop_image(angle_array,elevation=self.crop_elevation,crop_value=0)
+
+    def ele_azi_to_pixel(self,azimuth,elevation):
+        pass
 
     def pixel_to_ele_azi(self, x, y):
         """
@@ -314,6 +318,15 @@ class SkyImager(Instrument):
         Returns:
             tuple of (azimuth, elevation)
         """
+
+        x_size = self.get_image_size()[0]
+        if x > x_size/2:
+            x = x - x_size/2
+
+        elif x < x_size/2:
+            x = x + x_size/2
+
+
 
         x_dash = self._convert_var_to_dash(x)
         y_dash = self._convert_var_to_dash(y)

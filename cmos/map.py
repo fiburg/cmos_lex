@@ -209,7 +209,7 @@ class Map(object):
             text: string
             size: font size
         """
-        plt.title((text+' - '+self.date.strftime('%m.%d.%Y %H:%M:%S')), size=size)
+        plt.title((text+' - '+self.date.strftime('%d.%m.%Y %H:%M:%S UTC')), size=size)
 
     def save_plot(self, plot_path='./map.png', dpi=600):
         """

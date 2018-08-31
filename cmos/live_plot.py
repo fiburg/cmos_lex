@@ -26,7 +26,7 @@ def live_plot(output_path, image_folder):
         print(file)
 
         sky_imager = cmos.SkyImager("hq")
-        sky_imager.load_image(file, cloud_height=500)
+        sky_imager.load_image(file, cloud_height=640)
 
         print(sky_imager.date)
         print(sky_imager.height)
