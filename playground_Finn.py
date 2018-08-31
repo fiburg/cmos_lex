@@ -38,4 +38,3 @@ map.add_clouds(sky_imager.lat_lon_cloud_mask)
 map.add_station_marker(sky_imager.instrument_name, sky_imager.lat, sky_imager.lon)
 map.add_setting_title('CMOS - Clouds and shadows - HQ sky imager')
 map.save_plot("./plot/map.png")
-
