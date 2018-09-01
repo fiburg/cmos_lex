@@ -119,7 +119,7 @@ class Map(object):
         """
 
         cloud_mask[:, :, 0][cloud_mask[:, :, 0] == 0] = np.nan
-        cloud = plt.contourf(cloud_mask[:, :, 2],
+        cloud = self.ax.contourf(cloud_mask[:, :, 2],
                      cloud_mask[:, :, 1],
                      cloud_mask[:, :, 0],
                      transform=ccrs.PlateCarree(),

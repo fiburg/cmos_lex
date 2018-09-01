@@ -21,6 +21,10 @@ import numpy as np
 
 cloud_height = 2840
 
+
+"""
+#multiplot
+
 file = "/home/fibu/Studium/18_SoSe/Lehrexkursion/cmos_lex/data/img/LEX_WKM2_Image_20180826_152340_UTCp1.jpg"
 skyim_hq = cmos.SkyImager("hq")
 skyim_hq.load_image(file,cloud_height=cloud_height)
@@ -44,15 +48,37 @@ map.set_positional_data(date=skyim_hq.date,
                         sun_elevation=skyim_hq.sun_elevation)
 
 
-map.add_clouds(skyim_hq.lat_lon_cloud_mask, "Reds", vmin=0.)
+map.add_shadows(skyim_hq.lat_lon_cloud_mask, "Reds")
 map.add_station_marker(skyim_hq.instrument_name, skyim_hq.lat, skyim_hq.lon, color='red')
 
-map.add_clouds(skyim_west.lat_lon_cloud_mask, "Blues", vmin=0.)
+map.add_shadows(skyim_west.lat_lon_cloud_mask, "Blues")
 map.add_station_marker(skyim_west.instrument_name, skyim_west.lat, skyim_west.lon, color='blue')
 
-map.add_clouds(skyim_south.lat_lon_cloud_mask, "Greens", vmin=0.)
+map.add_shadows(skyim_south.lat_lon_cloud_mask, "Greens")
 map.add_station_marker(skyim_south.instrument_name, skyim_south.lat, skyim_south.lon, color= 'green')
 
 map.add_setting_title('CMOS - Shadow map - HQ, West, South')
-map.save_plot("./plot/shadow_map.png")
+map.save_plot("./plot/shadow_map_corrected.png")
+"""
 
+file = "/home/fibu/Studium/18_SoSe/Lehrexkursion/cmos_lex/data/img/LEX_WKM2_Image_20180826_152340_UTCp1.jpg"
+skyim_hq = cmos.SkyImager("hq")
+skyim_hq.load_image(file,cloud_height=cloud_height)
+skyim_hq.create_lat_lon_cloud_mask()
+
+map = cmos.Map()
+map.make_map()
+map.set_positional_data(date=skyim_hq.date,
+                        cloud_height=skyim_hq.cloud_height,
+                        sun_azimuth=skyim_hq.sun_azimuth,
+                        sun_elevation=skyim_hq.sun_elevation)
+
+map.add_shadows(skyim_hq.lat_lon_cloud_mask)
+map.add_clouds(skyim_hq.lat_lon_cloud_mask)
+
+skyim_hq.ele_azi_to_pixel(0,0)
+
+
+map.add_station_marker(skyim_hq.instrument_name, skyim_hq.lat, skyim_hq.lon, color='red')
+map.add_setting_title('CMOS - Shadow map - HQ')
+map.show_plot()
