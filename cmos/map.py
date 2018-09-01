@@ -93,7 +93,7 @@ class Map(object):
         ax.plot(bar_xs, [sby, sby], transform=tmc, color='k',
                 linewidth=linewidth)
 
-    def make_map(self, tile_resolution=12):
+    def make_map(self, ax, tile_resolution=12):
         """
         Adds the land map to the figure.
 
@@ -101,6 +101,7 @@ class Map(object):
             tile_resolution: resolution of map details (max=19)
         """
 
+        self.ax = ax
         self._make_ax(projection=self.request.crs)
         self.ax.set_extent(self.extent)
         self.ax.add_image(self.request, tile_resolution)
