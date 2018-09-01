@@ -17,7 +17,6 @@ class Map(object):
         self.extent = [lat_min, lat_max, lon_min, lon_max]
         self.request = cimgt.OSM()  # OpenStreetMap
 
-        self.fig = None
         self.ax = None
         self.date = None
         self.cloud_height = None
@@ -40,16 +39,15 @@ class Map(object):
         self.sun_azimuth = sun_azimuth
         self.sun_elevation = sun_elevation
 
-    def _make_fig(self, projection=ccrs.PlateCarree()):
+    def _make_ax(self, projection=ccrs.PlateCarree()):
         """
-        Creates the figure of the plot
+        Creates the ax of the map
 
         Args:
             projection: catropy projection
         """
 
-        self.fig, self.ax = plt.subplots(figsize=(8, 8),
-                               subplot_kw=dict(projection=projection))
+        self.ax = plt.axes(projection=projection)
 
     def _add_scale_bar(self,
                       ax, length=None, location=(0.9, 0.05), linewidth=3):
@@ -103,7 +101,7 @@ class Map(object):
             tile_resolution: resolution of map details (max=19)
         """
 
-        self._make_fig(projection=self.request.crs)
+        self._make_ax(projection=self.request.crs)
         self.ax.set_extent(self.extent)
         self.ax.add_image(self.request, tile_resolution)
         self._add_scale_bar(self.ax, 1)
@@ -145,7 +143,7 @@ class Map(object):
 
         cloud_mask[:, :, 0][cloud_mask[:, :, 0] == 0] = np.nan
         shadow_mask = self._calculate_shadow_offset(cloud_mask)
-        shadow = plt.contourf(shadow_mask[:, :, 2],
+        shadow = self.ax.contourf(shadow_mask[:, :, 2],
                      shadow_mask[:, :, 1],
                      shadow_mask[:, :, 0],
                      transform=ccrs.PlateCarree(),
@@ -168,7 +166,7 @@ class Map(object):
         Returns:
 
         """
-        plt.plot(lon, lat, marker=marker, markersize=marker_size, markeredgewidth=2.5,
+        self.ax.plot(lon, lat, marker=marker, markersize=marker_size, markeredgewidth=2.5,
                  color=color,
                  transform=ccrs.PlateCarree())
 
@@ -209,26 +207,7 @@ class Map(object):
             text: string
             size: font size
         """
-        plt.title((text+' - '+self.date.strftime('%d.%m.%Y %H:%M:%S UTC')), size=size)
-
-    def save_plot(self, plot_path='./map.png', dpi=600):
-        """
-        Saves the plot to file.
-
-        Args:
-            plot_path: string of plotting path
-        """
-        print("Plot: Saves figure...")
-        plt.tight_layout()
-        plt.savefig(plot_path, dpi=dpi)
-
-    def show_plot(self):
-        """
-        Shows the plot.
-        """
-
-        plt.tight_layout()
-        plt.show()
+        self.ax.set_title((text+' - '+self.date.strftime('%d.%m.%Y %H:%M:%S UTC')), size=size)
 
     def remove_sky_values(self):
         """
@@ -236,5 +215,5 @@ class Map(object):
         the next values without downloading the background map again.
         """
         print("Plot: Removes sky values...")
-        for coll in plt.gca().collections:
+        for coll in self.ax.collections:
             coll.remove()
