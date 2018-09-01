@@ -99,12 +99,17 @@ class Map(object):
 
         Args:
             tile_resolution: resolution of map details (max=19)
+
+        Returns:
+            self to use it as ax
         """
 
         self._make_ax(subplot_info=subplot_info, projection=self.request.crs)
         self.ax.set_extent(self.extent)
         self.ax.add_image(self.request, tile_resolution)
         self._add_scale_bar(self.ax, 1)
+
+        return self
 
     def add_clouds(self, cloud_mask, cmap="Greys", vmin=1., vmax=2.):
         """
