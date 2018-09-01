@@ -6,3 +6,6 @@ recursive-include cmos *.ini
 recursive-include cmos/data *.ini
 recursive-include cmos/data/*.ini
 
+recursive-include data *
+recursive-include data/ *
+recursive-include data/*

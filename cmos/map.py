@@ -238,3 +238,4 @@ class Map(object):
         print("Plot: Removes sky values...")
         for coll in plt.gca().collections:
             coll.remove()
+

@@ -74,11 +74,12 @@ class SkyImager(Instrument):
 
         self._get_date_from_image_name()
         self.get_sun_position()
+        self.remove_sun()
         self.image = self.crop_image(self.image, self.crop_elevation)
         self._apply_rotation_calib()
         self.create_cloud_mask()
         # self.create_lat_lon_cloud_mask()
-        self.remove_sun()
+
 
     def _get_date_from_image_name(self):
         """
@@ -161,13 +162,14 @@ class SkyImager(Instrument):
         """
 
         image_f = self.image.astype(float)
+        # image_f = self.crop_image(image_f,elevation=5)
 
         SI = ((image_f[:, :, 2]) - (image_f[:, :, 0])) / (
             ((image_f[:, :, 2]) + (image_f[:, :, 0])))
 
         SI[np.isnan(SI)] = 1
 
-        mask_sol1 = SI < 0.1
+        mask_sol1 = SI < 0.12
         Radius = 990
 
         x_center, y_center = self.find_center()
@@ -452,7 +454,7 @@ class SkyImager(Instrument):
 
         print("X_SOL_CEN", x_sol_cen, y_sol_cen)
         Radius_sol = 300
-        Radius_sol_center = 250
+        Radius_sol_center = 0
 
         x_size, y_size = self.get_image_size()
 

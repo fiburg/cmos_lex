@@ -30,7 +30,7 @@ class SkyImagerSetup(Instrument):
             r_thres: Threshold
         """
 
-        self.sky_imger.load_image(img_path)
+        self.sky_imger.load_image(img_path,540)
         img = self.sky_imger.original_image
         img = scipy.ndimage.filters.gaussian_filter(img, 3)
         r_ch = img[:, :, 0]
