@@ -4,8 +4,10 @@ from scipy.ndimage import label
 import numpy as np
 import glob
 
-# file = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM2_JPG_20180829/LEX_WKM2_Image_20180829_151040_UTCp1.jpg"
+# file = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM2_JPG_20180829/LEX_WKM2_Image_20180901_092840_UTCp1.jpg"
 # file = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM2_JPG_20180826/LEX_WKM2_Image_20180826_151040_UTCp1.jpg"
+
+# file = "W:/Aufzeichnung/wkm2/jpg/LEX_WKM2_Image_20180901_094820_UTCp1.jpg"
 
 files = "W:/Aufzeichnung/wkm2/jpg/LEX_WKM2_Image_*_UTCp1.jpg"
 file = sorted(glob.glob(files))[-1]
@@ -16,6 +18,8 @@ sky_imager.load_image(file,cloud_height=540)
 print(sky_imager.date)
 print(sky_imager.height)
 print(sky_imager.sun_elevation,sky_imager.sun_azimuth)
+
+sky_imager.shadow_on_cam_position()
 
 # sky_imager.sun_position_in_image()
 

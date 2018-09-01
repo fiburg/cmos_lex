@@ -147,7 +147,7 @@ class Map(object):
         """
 
         cloud_mask[:, :, 0][cloud_mask[:, :, 0] == 0] = np.nan
-        shadow_mask = self._calculate_shadow_offset(cloud_mask)
+        shadow_mask = self.calculate_shadow_offset(cloud_mask)
         shadow = self.ax.contourf(shadow_mask[:, :, 2],
                      shadow_mask[:, :, 1],
                      shadow_mask[:, :, 0],
@@ -175,7 +175,7 @@ class Map(object):
                  color=color,
                  transform=ccrs.PlateCarree())
 
-    def _calculate_shadow_offset(self, cloud_mask):
+    def calculate_shadow_offset(self, cloud_mask):
         """
         Calculation of the shadow map - the projection of the cloud mask in
         relation to the sun position.

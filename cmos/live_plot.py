@@ -17,6 +17,7 @@ def live_plot(output_path, image_folder):
     ax2 = plt.subplot(132)
     ax3 = map.make_map(subplot_info=133)
 
+
     while True:
         file = sorted(glob.glob(files))[-1]
         print(file)
@@ -46,14 +47,15 @@ def live_plot(output_path, image_folder):
         ax3.add_shadows(sky_imager.lat_lon_cloud_mask)
         ax3.add_clouds(sky_imager.lat_lon_cloud_mask)
         ax3.add_station_marker(sky_imager.instrument_name, sky_imager.lat, sky_imager.lon)
-        ax3.add_setting_title('CMOS - Clouds and shadows - HQ sky imager', size=15)
-        ax3.remove_sky_values()
+        ax3.add_setting_title('Clouds and shadows', size=16)
 
         plt.savefig(output_path)
 
+        ax3.remove_sky_values()
+
         # plt.show()
         print("sleeping")
-        time.sleep(10)
+        time.sleep(60)
         print("sleeping done")
         # plt.close()
 

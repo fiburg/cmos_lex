@@ -9,6 +9,7 @@ from pytz import timezone
 import scipy
 import collections
 import geopy
+import cmos
 
 class SkyImager(Instrument):
     """
@@ -203,7 +204,6 @@ class SkyImager(Instrument):
     def create_lat_lon_array(self):
         """
         Using the angle array and a height creating a similar aray containing the lat and lon values of each pixel.
-        TODO: Dies macht das entzerren des Bildes auf eine Ebene evtl. sogar überflüssig!
 
         Returns:
 
@@ -471,23 +471,37 @@ class SkyImager(Instrument):
         # self._rotate_image()
         pass
 
-    def hemisphere_to_plain(self, cbh):
-        # pass
 
-        x_size, y_size = self.get_image_size()
+    def shadow_on_cam_position(self):
 
-        self.new_coords = self.image[:, :, :2].copy()
-        self.new_coords[:, :,:] = np.nan
+        if not isinstance(self.lat_lon_cloud_mask, collections.Iterable):
+            self.create_lat_lon_cloud_mask()
 
-        for x in range(x_size):
-            for y in range(y_size):
-                alpha, epsilon = self.pixel_to_ele_azi(x, y)
-                r_hut = cbh * np.tan(np.deg2rad(90) - np.deg2rad(epsilon))
+        map = cmos.Map()
+        map.sun_elevation = self.sun_elevation
+        map.sun_azimuth = self.sun_azimuth
+        map.cloud_height = self.cloud_height
 
-                x_hut = r_hut * np.sin(np.deg2rad(alpha))
-                y_hut = r_hut * np.cos(np.deg2rad(alpha))
+        cloud_above_cam = self.lat_lon_cloud_mask.copy()
+        cloud_above_cam[:,:,0][self.angle_array[:,:,1] > 2] = 0
+        cloud_above_cam[np.isnan(cloud_above_cam)] = 0
 
-                print(alpha, epsilon, r_hut, x_hut, y_hut, x, y)
 
-                self.new_coords[x, y,0] = x_hut
-                self.new_coords[x, y, 0] = y_hut
+
+        # print("CLOUD_ABOVE_CAM:", cloud_above_cam.shape)
+        print(np.where(cloud_above_cam >0))
+        shadow_above_cam = map.calculate_shadow_offset(cloud_above_cam)
+        # print("SHAPE:",shadow_above_cam.shape)
+        # print("Shadow_above_cam",shadow_above_cam[np.where(shadow_above_cam[:,:,0] > 0)].shape)
+
+
+        shadow_index_at_cam = np.nansum(shadow_above_cam[:,:,0])
+        print("SHADOWINDEX:",shadow_index_at_cam)
+
+        if shadow_index_at_cam > 100:
+            print("Shadow!")
+            return 1
+
+        else:
+            print("NO Shadow!")
+            return 0
