@@ -66,8 +66,11 @@ skyim_hq = cmos.SkyImager("hq")
 skyim_hq.load_image(file,cloud_height=cloud_height)
 skyim_hq.create_lat_lon_cloud_mask()
 
+fig, ax = plt.subplots(nrows=1)
+
+
 map = cmos.Map()
-map.make_map()
+map.make_map(ax)
 map.set_positional_data(date=skyim_hq.date,
                         cloud_height=skyim_hq.cloud_height,
                         sun_azimuth=skyim_hq.sun_azimuth,
@@ -75,10 +78,6 @@ map.set_positional_data(date=skyim_hq.date,
 
 map.add_shadows(skyim_hq.lat_lon_cloud_mask)
 map.add_clouds(skyim_hq.lat_lon_cloud_mask)
-
-skyim_hq.ele_azi_to_pixel(0,0)
-
-
 map.add_station_marker(skyim_hq.instrument_name, skyim_hq.lat, skyim_hq.lon, color='red')
 map.add_setting_title('CMOS - Shadow map - HQ')
-map.show_plot()
+plt.show()
