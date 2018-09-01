@@ -39,7 +39,7 @@ class Map(object):
         self.sun_azimuth = sun_azimuth
         self.sun_elevation = sun_elevation
 
-    def _make_ax(self, projection=ccrs.PlateCarree()):
+    def _make_ax(self, subplot_info=111, projection=ccrs.PlateCarree()):
         """
         Creates the ax of the map
 
@@ -47,7 +47,7 @@ class Map(object):
             projection: catropy projection
         """
 
-        self.ax = plt.axes(projection=projection)
+        self.ax = plt.subplot(subplot_info, projection=projection)
 
     def _add_scale_bar(self,
                       ax, length=None, location=(0.9, 0.05), linewidth=3):
@@ -93,19 +93,23 @@ class Map(object):
         ax.plot(bar_xs, [sby, sby], transform=tmc, color='k',
                 linewidth=linewidth)
 
-    def make_map(self, ax, tile_resolution=12):
+    def make_map(self, subplot_info=111, tile_resolution=12):
         """
         Adds the land map to the figure.
 
         Args:
             tile_resolution: resolution of map details (max=19)
+
+        Returns:
+            self to use it as ax
         """
 
-        self.ax = ax
-        self._make_ax(projection=self.request.crs)
+        self._make_ax(subplot_info=subplot_info, projection=self.request.crs)
         self.ax.set_extent(self.extent)
         self.ax.add_image(self.request, tile_resolution)
         self._add_scale_bar(self.ax, 1)
+
+        return self
 
     def add_clouds(self, cloud_mask, cmap="Greys", vmin=1., vmax=2.):
         """
