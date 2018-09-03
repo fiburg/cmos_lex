@@ -4,7 +4,7 @@ import glob
 import os
 import numpy as np
 
-sky_imager_name = 'west'
+sky_imager_name = 'south'
 
 
 path = ('/home/fibu/Studium/18_SoSe/Lehrexkursion/cmos_lex/data/alignment/'+

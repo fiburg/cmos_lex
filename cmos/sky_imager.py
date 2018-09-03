@@ -73,11 +73,11 @@ class SkyImager(Instrument):
         self.image = image_array
         self.original_image = self.image.copy()
         self.scale_factor = scale_factor
+        self._apply_rotation_calib()
 
         self.crop_elevation = crop_elevation
         self.image = self.crop_image(self.image, self.crop_elevation)
 
-        self._apply_rotation_calib()
         self.get_date_from_image_name()
         self.get_sun_position()
         self.remove_sun()
@@ -502,10 +502,10 @@ class SkyImager(Instrument):
     def _rotate_image(self, deg):
         rows, cols = self.get_image_size()
         M = cv2.getRotationMatrix2D((cols / 2, rows / 2), -deg, 1)
-        self.rotated = cv2.warpAffine(self.image, M, (cols, rows))
+        return cv2.warpAffine(self.image, M, (cols, rows))
 
     def _apply_rotation_calib(self):
-        self._rotate_image(self.azimuth_offset)
+        self.image = self._rotate_image(self.azimuth_offset)
 
     def shadow_on_cam_position(self):
 
