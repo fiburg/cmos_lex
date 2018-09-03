@@ -19,16 +19,24 @@ def live_plot(output_path, image_folder):
 
 
     while True:
+
         file = sorted(glob.glob(files))[-1]
         print(file)
 
-
-        sky_imager.load_image(file, cloud_height=640)
+        sky_imager.load_image(file, cloud_height=1600)
         print(sky_imager.date)
         print(sky_imager.height)
         print(sky_imager.sun_elevation, sky_imager.sun_azimuth)
         sky_imager.create_lat_lon_array()
         sky_imager.create_lat_lon_cloud_mask()
+
+        shadow_on_cam_position = sky_imager.shadow_on_cam_position()
+        if shadow_on_cam_position:
+            base_color = "grey"
+
+        else:
+            base_color = "darkorange"
+
 
 
         # Raw image:
@@ -46,7 +54,7 @@ def live_plot(output_path, image_folder):
                                 sun_elevation=sky_imager.sun_elevation)
         ax3.add_shadows(sky_imager.lat_lon_cloud_mask)
         ax3.add_clouds(sky_imager.lat_lon_cloud_mask)
-        ax3.add_station_marker(sky_imager.instrument_name, sky_imager.lat, sky_imager.lon)
+        ax3.add_station_marker(sky_imager.instrument_name, sky_imager.lat, sky_imager.lon, color=base_color)
         ax3.add_setting_title('Clouds and shadows', size=16)
 
         plt.savefig(output_path)
@@ -55,7 +63,7 @@ def live_plot(output_path, image_folder):
 
         # plt.show()
         print("sleeping")
-        time.sleep(60)
+        time.sleep(10)
         print("sleeping done")
         # plt.close()
 

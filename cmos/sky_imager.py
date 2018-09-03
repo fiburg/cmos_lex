@@ -11,6 +11,8 @@ import collections
 import geopy
 import cmos
 
+from skimage import feature
+
 class SkyImager(Instrument):
     """
     Class to process the Allsky Images.
@@ -171,18 +173,27 @@ class SkyImager(Instrument):
         SI[np.isnan(SI)] = 1
 
         mask_sol1 = SI < 0.12
-        Radius = 990
 
-        x_center, y_center = self.find_center()
-        x_size, y_size = self.get_image_size()
-        y, x = np.ogrid[-y_center:y_size - y_center, -x_center:x_size - x_center]
-        # sol_mask_double = x ** 2 + y ** 2 <= Radius ** 2
-        # mask_sol1 = np.logical_and(mask_sol1)
         self.cloud_image = self.image.copy()
         self.cloud_image[:, :, :][mask_sol1] = [255, 0, 0]
         self.cloud_mask = self.cloud_image[:,:,0].copy()
         self.cloud_mask[:,:] = 0
         self.cloud_mask[:,:][mask_sol1] = 1
+
+    def create_cloud_mask_canny_edges(self):
+        """
+        This method is an alternative approach to find clouds inside the image,
+        using the "canny edges" .
+
+        Returns:
+
+        """
+
+        image_f = self.image.astype(float)
+        edges = feature.canny(image_f, sigma=3)
+        return edges
+
+
 
     def create_lat_lon_cloud_mask(self):
         if not isinstance(self.image,collections.Iterable):
@@ -483,7 +494,7 @@ class SkyImager(Instrument):
         map.cloud_height = self.cloud_height
 
         cloud_above_cam = self.lat_lon_cloud_mask.copy()
-        cloud_above_cam[:,:,0][self.angle_array[:,:,1] > 2] = 0
+        cloud_above_cam[:,:,0][self.angle_array[:,:,1] > 1] = 0
         cloud_above_cam[np.isnan(cloud_above_cam)] = 0
 
 

@@ -21,6 +21,8 @@ print(sky_imager.sun_elevation,sky_imager.sun_azimuth)
 
 sky_imager.shadow_on_cam_position()
 
+cloud_mask = sky_imager.create_cloud_mask_canny_edges()
+
 # sky_imager.sun_position_in_image()
 
 sky_imager.create_lat_lon_array()
@@ -38,7 +40,7 @@ print("Sun pos theo:", sky_imager.sun_azimuth, sky_imager.sun_elevation)
 fig, (ax1,ax2,ax3) = plt.subplots(ncols=3)
 ax1.imshow(sky_imager.original_image)
 ax2.imshow(sky_imager.image)
-ax3.imshow(sky_imager.cloud_image[:,:,:])
+ax3.imshow(cloud_mask)
 plt.show()
 
 # fig1, (ax1,ax2) = plt.subplots(ncols=2)
