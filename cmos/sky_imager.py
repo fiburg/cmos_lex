@@ -502,16 +502,12 @@ class SkyImager(Instrument):
         self.image_mask = np.logical_xor(self.image_mask, sol_mask_cen1)
 
     def _rotate_image(self, deg):
-        # self.image = scipy.ndimage.rotate(self.image, angle=deg)
-
         rows, cols = self.get_image_size()
         M = cv2.getRotationMatrix2D((cols / 2, rows / 2), -deg, 1)
         self.rotated = cv2.warpAffine(self.image, M, (cols, rows))
 
     def _apply_rotation_calib(self):
         self._rotate_image(self.azimuth_offset)
-        pass
-
 
     def shadow_on_cam_position(self):
 

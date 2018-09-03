@@ -22,6 +22,7 @@ class Instrument(object):
         self.height = None
         self.date = None
         self.tz_info_num = None
+        self.azimuth_offset = None
         self.load_instrument_arguments()
 
     def load_instrument_arguments(self):
@@ -50,6 +51,7 @@ class Instrument(object):
         self.height = float(config["DEFAULT"]["HEIGHT"])
         self.tz_info_num = float(config["DEFAULT"]["UTCOFFSET"])
         self.path = str(config["DEFAULT"]["PATH"])
+        self.azimuth_offset = float(config["SPECIFIC"]["AZIMUTHOFFSET"])
 
     @staticmethod
     def _get_inst_inits(instrument_name):
