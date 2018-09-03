@@ -215,8 +215,6 @@ class SkyImager(Instrument):
             self.cloud_image[mask3] = [255, 255 - 3 * j, 0]
             self.cloud_mask[mask3] = 1
 
-        self.cloud_mask[np.where(self.image[:,:,0] == 0)] = 2
-
 
     def create_lat_lon_cloud_mask(self):
         if not isinstance(self.image,collections.Iterable):

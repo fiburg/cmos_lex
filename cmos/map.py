@@ -147,8 +147,6 @@ class Map(object):
         """
 
         cloud_mask[:, :, 0][cloud_mask[:, :, 0] == 0] = np.nan
-        cloud_mask[:, :, 0][cloud_mask[:, :, 0] == 2] = np.nan
-
 
         shadow_mask = self.calculate_shadow_offset(cloud_mask)
         shadow = self.ax.contourf(shadow_mask[:, :, 2],
