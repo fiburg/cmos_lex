@@ -20,6 +20,8 @@ print(sky_imager.height)
 print(sky_imager.sun_elevation,sky_imager.sun_azimuth)
 
 sky_imager.shadow_on_cam_position()
+sky_imager._rotate_image(45)
+rotated = sky_imager.rotated
 
 # cloud_mask = sky_imager.create_cloud_mask_canny_edges()
 
@@ -40,7 +42,7 @@ print("Sun pos theo:", sky_imager.sun_azimuth, sky_imager.sun_elevation)
 fig, (ax1,ax2, ax3) = plt.subplots(ncols=3)
 ax1.imshow(sky_imager.cloud_image)
 ax2.imshow(sky_imager.original_image)
-ax3.imshow(sky_imager.cloud_mask)
+ax3.imshow(sky_imager.rotated)
 plt.show()
 
 # fig1, (ax1,ax2) = plt.subplots(ncols=2)
