@@ -11,6 +11,7 @@ import collections
 import geopy
 import cmos
 from skimage import feature, color
+import cv2
 
 class SkyImager(Instrument):
     """
@@ -74,12 +75,12 @@ class SkyImager(Instrument):
         self.scale_factor = scale_factor
 
         self.crop_elevation = crop_elevation
+        self.image = self.crop_image(self.image, self.crop_elevation)
 
+        self._apply_rotation_calib()
         self.get_date_from_image_name()
         self.get_sun_position()
         self.remove_sun()
-        self.image = self.crop_image(self.image, self.crop_elevation)
-        self._apply_rotation_calib()
         self.create_cloud_mask()
         # self.create_lat_lon_cloud_mask()
 
@@ -175,7 +176,7 @@ class SkyImager(Instrument):
 
         SI[np.isnan(SI)] = 1
 
-        mask_sol1 = SI < 0.15
+        mask_sol1 = SI < 0.12
 
         x_sol_cen, y_sol_cen = self.ele_azi_to_pixel(self.sun_azimuth, self.sun_elevation)
         x_size, y_size = self.get_image_size()
@@ -209,7 +210,7 @@ class SkyImager(Instrument):
             mask2 = np.logical_and(~sol_mask_cen, sol_mask)
             sol_mask_cen = np.logical_or(sol_mask, sol_mask_cen)
 
-            mask3 = SI < parameter[j]+0.1
+            mask3 = SI < parameter[j]+0.08
             mask3 = np.logical_and(mask2, mask3)
             # image_array_c[mask3] = [255, 0, 0]
             self.cloud_image[mask3] = [255, 255 - 3 * j, 0]
@@ -499,12 +500,12 @@ class SkyImager(Instrument):
         self.image_mask = np.logical_xor(self.image_mask, sol_mask_cen1)
 
     def _rotate_image(self, deg):
-        # not the right result...
-        self.image = scipy.ndimage.rotate(self.image, angle=deg)
+        rows, cols = self.get_image_size()
+        M = cv2.getRotationMatrix2D((cols / 2, rows / 2), -deg, 1)
+        self.rotated = cv2.warpAffine(self.image, M, (cols, rows))
 
     def _apply_rotation_calib(self):
-        pass
-
+        self._rotate_image(self.azimuth_offset)
 
     def shadow_on_cam_position(self):
 
