@@ -133,7 +133,7 @@ class Map(object):
                      vmax=vmax,
                      alpha=0.9)
 
-    def add_shadows(self, cloud_mask, cmap="Greys", vmin=0., vmax=1.):
+    def add_shadows(self, cloud_mask, cmap="Greys", vmin=0., vmax=2.):
         """
         Adds the shadow mask to the map. The shadow mask is calculated
         by sun position and cloud mask.
@@ -147,6 +147,9 @@ class Map(object):
         """
 
         cloud_mask[:, :, 0][cloud_mask[:, :, 0] == 0] = np.nan
+        cloud_mask[:, :, 0][cloud_mask[:, :, 0] == 2] = np.nan
+
+
         shadow_mask = self.calculate_shadow_offset(cloud_mask)
         shadow = self.ax.contourf(shadow_mask[:, :, 2],
                      shadow_mask[:, :, 1],

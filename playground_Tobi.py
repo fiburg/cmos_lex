@@ -37,9 +37,10 @@ print("Sun pos theo:", sky_imager.sun_azimuth, sky_imager.sun_elevation)
 
 # sky_imager.hemisphere_to_plain(cbh=1000)
 
-fig, (ax1,ax2) = plt.subplots(ncols=2)
+fig, (ax1,ax2, ax3) = plt.subplots(ncols=3)
 ax1.imshow(sky_imager.cloud_image)
 ax2.imshow(sky_imager.original_image)
+ax3.imshow(sky_imager.cloud_mask)
 plt.show()
 
 # fig1, (ax1,ax2) = plt.subplots(ncols=2)
