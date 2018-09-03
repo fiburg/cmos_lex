@@ -10,8 +10,7 @@ import scipy
 import collections
 import geopy
 import cmos
-
-from skimage import feature
+from skimage import feature, color
 
 class SkyImager(Instrument):
     """
@@ -32,6 +31,7 @@ class SkyImager(Instrument):
         self.cloud_mask = None
         self.lat_lon_cloud_mask = None
         self.lat_lon_array = None
+        self.image_mask = None # This mask fits over the cropped image and the cutted sun
 
         self.scale_factor = None
         self.crop_elevation = None
@@ -151,6 +151,8 @@ class SkyImager(Instrument):
         else:
             raise IndexError("For this index the cropping is not implemented yet.")
 
+        self.image_mask = center_mask
+
         return image
 
     def _read_lense_settings(self):
@@ -173,28 +175,47 @@ class SkyImager(Instrument):
 
         SI[np.isnan(SI)] = 1
 
-        mask_sol1 = SI < 0.12
+        mask_sol1 = SI < 0.15
+
+        x_sol_cen, y_sol_cen = self.ele_azi_to_pixel(self.sun_azimuth, self.sun_elevation)
+        x_size, y_size = self.get_image_size()
+        y, x = np.ogrid[-y_sol_cen:y_size - y_sol_cen, -x_sol_cen:x_size - x_sol_cen]
+
+        size = 50
+        radius_sol_area = size*9
+        sol_mask_area = x ** 2 + y ** 2 <= radius_sol_area ** 2
+        new_mask = np.logical_and(~sol_mask_area,mask_sol1)
 
         self.cloud_image = self.image.copy()
-        self.cloud_image[:, :, :][mask_sol1] = [255, 0, 0]
+        self.cloud_image[:, :, :][new_mask] = [255, 0, 0]
         self.cloud_mask = self.cloud_image[:,:,0].copy()
         self.cloud_mask[:,:] = 0
-        self.cloud_mask[:,:][mask_sol1] = 1
+        self.cloud_mask[:,:][new_mask] = 1
 
-    def create_cloud_mask_canny_edges(self):
-        """
-        This method is an alternative approach to find clouds inside the image,
-        using the "canny edges" .
+        Radius_sol = 100
+        sol_mask_cen = x ** 2 + y ** 2 <= Radius_sol ** 2
 
-        Returns:
+        # AREA AROUND SUN:
 
-        """
+        parameter = np.zeros(size)
+        for j in range(size):
+            parameter[j] = (0 + j * 0.4424283716980435 - pow(j, 2) * 0.06676211439554262 + pow(j,3) *
+                            0.0026358061791573453 - pow(j, 4) * 0.000029417130873311177 + pow(j, 5) *
+                            1.0292852149593944e-7) * 0.001
 
-        image_f = self.image.astype(float)
-        image_f = image_f.mean(axis=-1)
-        edges = feature.canny(image_f, sigma=1)
-        return edges
+        for j in range(size):
+            Radius_sol = j * 10
+            sol_mask = (x * x) + (y * y) <= Radius_sol * Radius_sol
+            mask2 = np.logical_and(~sol_mask_cen, sol_mask)
+            sol_mask_cen = np.logical_or(sol_mask, sol_mask_cen)
 
+            mask3 = SI < parameter[j]+0.1
+            mask3 = np.logical_and(mask2, mask3)
+            # image_array_c[mask3] = [255, 0, 0]
+            self.cloud_image[mask3] = [255, 255 - 3 * j, 0]
+            self.cloud_mask[mask3] = 1
+
+        self.cloud_mask[np.where(self.image[:,:,0] == 0)] = 2
 
 
     def create_lat_lon_cloud_mask(self):
@@ -466,7 +487,7 @@ class SkyImager(Instrument):
         x_sol_cen, y_sol_cen = self.ele_azi_to_pixel(self.sun_azimuth,self.sun_elevation)
 
         print("X_SOL_CEN", x_sol_cen, y_sol_cen)
-        Radius_sol = 300
+        Radius_sol = 100
         Radius_sol_center = 0
 
         x_size, y_size = self.get_image_size()
@@ -476,6 +497,8 @@ class SkyImager(Instrument):
         sol_mask_cen = x ** 2 + y ** 2 <= Radius_sol_center ** 2
         sol_mask_cen1 = np.logical_xor(sol_mask_cen, sol_mask)
         self.image[:, :, :][sol_mask_cen1] = [0, 0, 0]
+
+        self.image_mask = np.logical_xor(self.image_mask, sol_mask_cen1)
 
     def _rotate_image(self, deg):
         # not the right result...
