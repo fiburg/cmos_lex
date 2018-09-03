@@ -478,10 +478,10 @@ class SkyImager(Instrument):
         self.image[:, :, :][sol_mask_cen1] = [0, 0, 0]
 
     def _rotate_image(self, deg):
+        # not the right result...
         self.image = scipy.ndimage.rotate(self.image, angle=deg)
 
     def _apply_rotation_calib(self):
-        # self._rotate_image()
         pass
 
 
