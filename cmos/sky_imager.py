@@ -75,12 +75,12 @@ class SkyImager(Instrument):
         self.scale_factor = scale_factor
 
         self.crop_elevation = crop_elevation
+        self.image = self.crop_image(self.image, self.crop_elevation)
 
+        self._apply_rotation_calib()
         self.get_date_from_image_name()
         self.get_sun_position()
         self.remove_sun()
-        self.image = self.crop_image(self.image, self.crop_elevation)
-        self._apply_rotation_calib()
         self.create_cloud_mask()
         # self.create_lat_lon_cloud_mask()
 
