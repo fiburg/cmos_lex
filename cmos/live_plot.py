@@ -12,6 +12,7 @@ def live_plot(output_path, image_folder):
     files = image_folder
     sky_imager = cmos.SkyImager("hq")
     map = cmos.Map()
+    ceilo = cmos.Ceilometer()
 
     ax1 = plt.subplot(131)
     ax2 = plt.subplot(132)
@@ -22,8 +23,10 @@ def live_plot(output_path, image_folder):
         file = sorted(glob.glob(files))[-1]
         print(file)
 
+        cloud_height = ceilo.get_height(sky_imager.get_date_from_image_name(file))
+        print('cloud height = ' + str(cloud_height))
 
-        sky_imager.load_image(file, cloud_height=640)
+        sky_imager.load_image(file, cloud_height=cloud_height)
         print(sky_imager.date)
         print(sky_imager.height)
         print(sky_imager.sun_elevation, sky_imager.sun_azimuth)

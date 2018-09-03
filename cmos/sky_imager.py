@@ -73,7 +73,7 @@ class SkyImager(Instrument):
 
         self.crop_elevation = crop_elevation
 
-        self._get_date_from_image_name()
+        self.get_date_from_image_name()
         self.get_sun_position()
         self.remove_sun()
         self.image = self.crop_image(self.image, self.crop_elevation)
@@ -82,13 +82,14 @@ class SkyImager(Instrument):
         # self.create_lat_lon_cloud_mask()
 
 
-    def _get_date_from_image_name(self):
+    def get_date_from_image_name(self, filename=None):
         """
         sets the self.date by reading the name of the input file.
 
         """
+        if not filename:
+            filename = os.path.split(self.input_file)[-1]
 
-        filename = os.path.split(self.input_file)[-1]
         _date = "_".join(filename.split("_")[3:5])
         self.date = dt.strptime(_date, "%Y%m%d_%H%M%S")
         self.date = self.date - datetime.timedelta(hours=1)
