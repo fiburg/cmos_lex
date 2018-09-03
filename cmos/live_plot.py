@@ -23,7 +23,8 @@ def live_plot(output_path, image_folder):
         file = sorted(glob.glob(files))[-1]
         print(file)
 
-        cloud_height = ceilo.get_height(sky_imager.get_date_from_image_name(file))
+        sky_imager.get_date_from_image_name(file)
+        cloud_height = ceilo.get_height(sky_imager.date)
         print('cloud height = ' + str(cloud_height))
 
         sky_imager.load_image(file, cloud_height=cloud_height)

@@ -191,7 +191,8 @@ class SkyImager(Instrument):
         """
 
         image_f = self.image.astype(float)
-        edges = feature.canny(image_f, sigma=3)
+        image_f = image_f.mean(axis=-1)
+        edges = feature.canny(image_f, sigma=1)
         return edges
 
 
