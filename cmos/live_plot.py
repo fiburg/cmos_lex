@@ -41,7 +41,7 @@ def live_plot(output_path, image_folder):
         else:
             base_color = "darkorange"
 
-
+        print("plotting...")
 
         # Raw image:
         ax1.imshow(sky_imager.original_image)
@@ -61,8 +61,10 @@ def live_plot(output_path, image_folder):
         ax3.add_station_marker(sky_imager.instrument_name, sky_imager.lat, sky_imager.lon, color=base_color)
         ax3.add_setting_title('Clouds and shadows', size=16)
 
+        print("Saving image...")
         plt.savefig(output_path)
 
+        print("Removing old layers from Map...")
         ax3.remove_sky_values()
 
         # plt.show()
