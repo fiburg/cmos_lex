@@ -21,7 +21,7 @@ class Instrument(object):
         self.lon = None
         self.height = None
         self.date = None
-        self.tz_info = None
+        self.tz_info_num = None
         self.load_instrument_arguments()
 
     def load_instrument_arguments(self):
@@ -34,7 +34,7 @@ class Instrument(object):
 
         here = os.path.realpath(__file__)
         here = os.path.split(here)[0]
-        init_file = here + "/../data/cam%s.ini"%self._get_cam_number(self.instrument_name)
+        init_file = (here+"/../data/"+self._get_inst_inits(self.instrument_name)+".ini")
 
         print(init_file)
 
@@ -48,14 +48,13 @@ class Instrument(object):
         self.lat = float(config["DEFAULT"]["LAT"])
         self.lon = float(config["DEFAULT"]["LON"])
         self.height = float(config["DEFAULT"]["HEIGHT"])
-        self.tz_info = float(config["DEFAULT"]["UTCOFFSET"])
-
-
+        self.tz_info_num = float(config["DEFAULT"]["UTCOFFSET"])
+        self.path = str(config["DEFAULT"]["PATH"])
 
     @staticmethod
-    def _get_cam_number(instrument_name):
+    def _get_inst_inits(instrument_name):
         """
-        Function to map the instrument names to the camera numbers.
+        Function to map the instrument names to the init files.
 
         Args:
             instrument_name:
@@ -63,13 +62,14 @@ class Instrument(object):
         Returns:
 
         """
-        cams = {
-            "hq":"2",
-            "south":"4",
-            "west":"3"
+        inst = {
+            "hq":"cam2",
+            "south":"cam4",
+            "west":"cam3",
+            "ceilo":"ceilo"
         }
 
-        return cams[instrument_name]
+        return inst[instrument_name]
 
 
 
