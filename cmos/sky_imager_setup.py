@@ -6,6 +6,7 @@ from datetime import datetime as dt
 import scipy.ndimage
 import scipy.signal
 import skimage.morphology
+import cv2
 
 
 class SkyImagerSetup(Instrument):
@@ -34,6 +35,9 @@ class SkyImagerSetup(Instrument):
 
         self.sky_imager.load_image(img_path,540)
         img = self.sky_imager.original_image
+        rows, cols = self.sky_imager.get_image_size()
+        M = cv2.getRotationMatrix2D((cols / 2, rows / 2), -self.sky_imager.azimuth_offset, 1)
+        img = cv2.warpAffine(img, M, (cols, rows))
         img = scipy.ndimage.filters.gaussian_filter(img, 3)
         r_ch = img[:, :, 0]
         sun_filter = r_ch > r_thres
