@@ -16,7 +16,7 @@ import scipy
 #    print(sun_position)
 
 
-#file = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM2_JPG_20180826/LEX_WKM2_Image_20180826_152340_UTCp1.jpg"
+file = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM2_JPG_20180826/LEX_WKM2_Image_20180826_152340_UTCp1.jpg"
 #
 
 
@@ -68,12 +68,12 @@ plt.savefig("./plot/test_shadow_map_corrected.png")
 
 # single plot
 
-file = "/home/fibu/Studium/18_SoSe/Lehrexkursion/cmos_lex/data/img/LEX_WKM2_Image_20180826_152340_UTCp1.jpg"
+# file = "/home/fibu/Studium/18_SoSe/Lehrexkursion/cmos_lex/data/img/LEX_WKM2_Image_20180826_152340_UTCp1.jpg"
 skyim_hq = cmos.SkyImager("hq")
 skyim_hq.load_image(file,cloud_height=cloud_height)
-#skyim_hq.create_lat_lon_cloud_mask()
+skyim_hq.create_lat_lon_cloud_mask()
 
-"""
+
 
 fig = plt.figure()
 map = cmos.Map()
@@ -83,23 +83,31 @@ ax.set_positional_data(date=skyim_hq.date,
                         cloud_height=skyim_hq.cloud_height,
                         sun_azimuth=skyim_hq.sun_azimuth,
                         sun_elevation=skyim_hq.sun_elevation)
-
-ax.add_shadows(skyim_hq.lat_lon_cloud_mask)
-ax.add_clouds(skyim_hq.lat_lon_cloud_mask)
+ax.create_shadow_mask(skyim_hq.lat_lon_cloud_mask)
+ax.add_shadows()
+# ax.add_outside_range(ax.shadow_mask)
+#ax.add_clouds(skyim_hq.lat_lon_cloud_mask)
 ax.add_station_marker(skyim_hq.instrument_name, skyim_hq.lat, skyim_hq.lon, color='red')
 ax.add_setting_title('CMOS - Shadow map - HQ')
 
 plt.savefig('./new_map.png')
 
+# fig,ax = plt.subplots()
+# ax.contourf(map.outer_mask[:,:,1],
+#                                  map.outer_mask[:,:,2],
+#                                  map.outer_mask[:,:,0],)
+
+
+
 
 ceilo = cmos.Ceilometer()
 height = ceilo.get_height(skyim_hq.date)
-"""
 
-fig, (ax1,ax2) = plt.subplots(ncols=2)
-ax1.imshow(skyim_hq.angle_array[:,:,0])
-rot = scipy.ndimage.rotate(skyim_hq.angle_array[:,:,0], angle=45, reshape=False)
-print(np.max(skyim_hq.angle_array[:,:,0]))
-print(np.max(rot))
-ax2.imshow(rot)
+
+# fig, (ax1,ax2) = plt.subplots(ncols=2)
+# ax1.imshow(skyim_hq.angle_array[:,:,0])
+# rot = scipy.ndimage.rotate(skyim_hq.angle_array[:,:,0], angle=45, reshape=False)
+# print(np.max(skyim_hq.angle_array[:,:,0]))
+# print(np.max(rot))
+# ax2.imshow(rot)
 plt.show()

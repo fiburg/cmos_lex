@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.io.img_tiles as cimgt
 import datetime
+import cmos
+import collections
 
 class Map(object):
     """
@@ -22,6 +24,9 @@ class Map(object):
         self.cloud_height = None
         self.sun_azimuth = None
         self.sun_elevation = None
+        self.max_elevation_angle = 30
+
+        self.shadow_mask = None
 
     def set_positional_data(self, date, cloud_height,
                             sun_azimuth, sun_elevation):
@@ -133,7 +138,62 @@ class Map(object):
                      vmax=vmax,
                      alpha=0.9)
 
-    def add_shadows(self, cloud_mask, cmap="Greys", vmin=0., vmax=2.):
+    def add_outside_range(self,shadow_mask, cmap="Greys"):
+        outer_mask_size = 1000
+        masking_value = 100
+
+        outer_mask_lats = np.linspace(self.extent[0],self.extent[1],outer_mask_size)
+        outer_mask_lons = np.linspace(self.extent[2],self.extent[3],outer_mask_size)
+        outer_mask_values = np.linspace(masking_value,masking_value,outer_mask_size)
+
+        lats_out, lons_out = np.meshgrid(outer_mask_lats, outer_mask_lons)
+
+        outer_mask = np.zeros([1000,1000,3])
+        outer_mask[:,:,0] = outer_mask_values
+        outer_mask[:,:,1] = lons_out
+        outer_mask[:,:,2] = lats_out
+
+        self.outer_mask = outer_mask
+
+        #
+        # print("Running loop")
+        # idx = []
+        # for x in shadow_mask[:,0,2]:
+        #     for y in shadow_mask[0,:,1]:
+        #         idx.append(cmos.SkyImager.find_nearest_idx(outer_mask[:,:,1],outer_mask[:,:,2],x,y))
+
+
+        print("plotting mask!!!")
+
+        outer = self.ax.contourf(outer_mask[:, :, 2],
+                                 outer_mask[:, :, 1],
+                                 outer_mask[:, :, 0],
+                                 transform=ccrs.PlateCarree(),
+                                 cmap=cmap,
+                                 # vmin=vmin,
+                                 # vmax=vmax,
+                                 alpha=0.1
+                                 )
+
+    def create_shadow_mask(self,cloud_mask):
+        cloud_mask[:, :, 0][cloud_mask[:, :, 0] == 0] = np.nan
+
+        a = [cloud_mask[:, :, 0] == 2]
+        b = [cloud_mask[:,:,1] == np.nan]
+
+        mask = np.logical_and(a,b)[0,:,:]
+        self.mask = mask
+        cloud_mask[: ,:, 0][mask] = np.nan
+        cloud_mask[:, :, 1][mask] = np.nan
+        cloud_mask[:, :, 2][mask] = np.nan
+
+        # cloud_mask[:, :, 0][cloud_mask[:, :, 0] == 2] = np.nan
+
+
+        shadow_mask = self.calculate_shadow_offset(cloud_mask)
+        self.shadow_mask = shadow_mask
+
+    def add_shadows(self, cmap="Greys", vmin=0., vmax=3.):
         """
         Adds the shadow mask to the map. The shadow mask is calculated
         by sun position and cloud mask.
@@ -146,11 +206,25 @@ class Map(object):
             vmax: maximal value of cmap
         """
 
-        cloud_mask[:, :, 0][cloud_mask[:, :, 0] == 0] = np.nan
-        cloud_mask[:, :, 0][cloud_mask[:, :, 0] == 2] = np.nan
+        if not isinstance(self.shadow_mask, collections.Iterable):
+            raise ImportError("Shadow Mask is not created yet.")
+        shadow_mask = self.shadow_mask
+
+        a = [shadow_mask[:, :, 0] > 1][0]
+        b = a.copy()
+        b[:,:] = 0
+        c = np.nan_to_num(shadow_mask[:,:,1])
+        b = [c == 0 ][0]
+
+        mask = np.logical_and(a,b)
+        self.mask = mask
+        shadow_mask[: ,:, 0][mask] = np.nan
+        shadow_mask[:, :, 1][mask] = np.nan
+        shadow_mask[:, :, 2][mask] = np.nan
+
+        self.shadow_mask = shadow_mask
 
 
-        shadow_mask = self.calculate_shadow_offset(cloud_mask)
         shadow = self.ax.contourf(shadow_mask[:, :, 2],
                      shadow_mask[:, :, 1],
                      shadow_mask[:, :, 0],
@@ -174,6 +248,7 @@ class Map(object):
         Returns:
 
         """
+
         self.ax.plot(lon, lat, marker=marker, markersize=marker_size, markeredgewidth=2.5,
                  color=color,
                  transform=ccrs.PlateCarree())
@@ -189,6 +264,7 @@ class Map(object):
         Returns:
             shadow_mask: shadow map
         """
+        self.cloud_mask =cloud_mask
         dist = np.multiply(np.tan(np.deg2rad(self.sun_elevation)), self.cloud_height)
 
         dx = np.multiply(dist,

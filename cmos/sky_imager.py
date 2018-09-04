@@ -190,8 +190,10 @@ class SkyImager(Instrument):
         self.cloud_image = self.image.copy()
         self.cloud_image[:, :, :][new_mask] = [255, 0, 0]
         self.cloud_mask = self.cloud_image[:,:,0].copy()
-        self.cloud_mask[:,:] = 0
+        self.cloud_mask[:,:][np.where(self.cloud_mask != 0)] = 2
+        self.cloud_mask[:,:][sol_mask_area] = 2
         self.cloud_mask[:,:][new_mask] = 1
+
 
         Radius_sol = 100
         sol_mask_cen = x ** 2 + y ** 2 <= Radius_sol ** 2
@@ -216,7 +218,7 @@ class SkyImager(Instrument):
             self.cloud_image[mask3] = [255, 255 - 3 * j, 0]
             self.cloud_mask[mask3] = 1
 
-        self.cloud_mask[np.where(self.image[:,:,0] == 0)] = 2
+
 
 
     def create_lat_lon_cloud_mask(self):
