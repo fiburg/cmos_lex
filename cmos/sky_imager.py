@@ -78,7 +78,7 @@ class SkyImager(Instrument):
         self.crop_elevation = crop_elevation
         self.image = self.crop_image(self.image, self.crop_elevation)
 
-        self._apply_rotation_calib()
+
         self.get_date_from_image_name()
         self.get_sun_position()
         self.remove_sun()
