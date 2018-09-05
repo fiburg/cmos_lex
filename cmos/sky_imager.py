@@ -184,7 +184,7 @@ class SkyImager(Instrument):
 
         SI[np.isnan(SI)] = 1
 
-        mask_sol1 = SI < 0.12
+        mask_sol1 = SI < 0.18
 
         x_sol_cen, y_sol_cen = self.ele_azi_to_pixel(self.sun_azimuth, self.sun_elevation)
         x_size, y_size = self.get_image_size()
@@ -559,8 +559,8 @@ class SkyImager(Instrument):
         if not isinstance(self.lat_lon_cloud_mask, collections.Iterable):
             self.create_lat_lon_cloud_mask()
 
-        if not lat:
-            lat = self.lat
+        # if not lat:
+        #     lat = self.lat
 
         map = cmos.Map()
         map.sun_elevation = self.sun_elevation

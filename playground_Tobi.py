@@ -56,48 +56,53 @@ import glob
 # # plt.show()
 
 #####################################
-time = "120800"
-file_hq = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM2_JPG_20180826/LEX_WKM2_Image_20180826_%s_UTCp1.jpg"%time
-file_west = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM3_JPG_20180826/LEX_WKM3_Image_20180826_%s_UTCp1.jpg"%time
-file_south = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM4_JPG_20180826/LEX_WKM4_Image_20180826_%s_UTCp1.jpg"%time
+# time = "120800"
+# file_hq = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM2_JPG_20180826/LEX_WKM2_Image_20180826_%s_UTCp1.jpg"%time
+# file_west = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM3_JPG_20180826/LEX_WKM3_Image_20180826_%s_UTCp1.jpg"%time
+# file_south = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM4_JPG_20180826/LEX_WKM4_Image_20180826_%s_UTCp1.jpg"%time
+#
+# sky_imager_hq = cmos.SkyImager("hq")
+# sky_imager_hq.load_image(file_hq,1000)
+#
+# sky_imager_west = cmos.SkyImager("west")
+# sky_imager_west.load_image(file_west,1000)
+#
+#
+# sky_imager_south = cmos.SkyImager("south")
+# sky_imager_south.load_image(file_south,1000)
+#
+# sky_imager_setup = cmos.SkyImagerSetup("hq")
+# calib,template = sky_imager_setup.auto_calib_elevation_offset(sky_imager_hq.cloud_mask,
+#                                                       sky_imager_west.cloud_mask,
+#                                                      )
+#
+# ij = np.unravel_index(np.argmax(calib), calib.shape)
+# x, y = ij[::-1]
+#
+# fig,(ax1,ax2,ax3) = plt.subplots(ncols=3)
+#
+# hcoin, wcoin = template.shape
+#
+# x_orig, y_orig = (960,960)
+#
+# ax1.imshow(sky_imager_hq.cloud_mask)
+# rect = plt.Rectangle((x_orig, y_orig), wcoin, hcoin, edgecolor='r', facecolor='none')
+# ax1.add_patch(rect)
+#
+# ax2.imshow(sky_imager_west.cloud_mask)
+# rect = plt.Rectangle((x, y), wcoin, hcoin, edgecolor='r', facecolor='none')
+# ax2.add_patch(rect)
+#
+# ax3.imshow(calib)
+# ax3.set_axis_off()
+# ax3.set_title('`match_template`\nresult')
+# # highlight matched region
+# ax3.autoscale(False)
+# ax3.plot(x, y, 'o', markeredgecolor='r', markerfacecolor='none', markersize=10)
+#
+# plt.show()
 
-sky_imager_hq = cmos.SkyImager("hq")
-sky_imager_hq.load_image(file_hq,1000)
+#####################################
 
-sky_imager_west = cmos.SkyImager("west")
-sky_imager_west.load_image(file_west,1000)
-
-
-sky_imager_south = cmos.SkyImager("south")
-sky_imager_south.load_image(file_south,1000)
-
-sky_imager_setup = cmos.SkyImagerSetup("hq")
-calib,template = sky_imager_setup.auto_calib_elevation_offset(sky_imager_hq.cloud_mask,
-                                                      sky_imager_west.cloud_mask,
-                                                     )
-
-ij = np.unravel_index(np.argmax(calib), calib.shape)
-x, y = ij[::-1]
-
-fig,(ax1,ax2,ax3) = plt.subplots(ncols=3)
-
-hcoin, wcoin = template.shape
-
-x_orig, y_orig = (960,960)
-
-ax1.imshow(sky_imager_hq.cloud_mask)
-rect = plt.Rectangle((x_orig, y_orig), wcoin, hcoin, edgecolor='r', facecolor='none')
-ax1.add_patch(rect)
-
-ax2.imshow(sky_imager_west.cloud_mask)
-rect = plt.Rectangle((x, y), wcoin, hcoin, edgecolor='r', facecolor='none')
-ax2.add_patch(rect)
-
-ax3.imshow(calib)
-ax3.set_axis_off()
-ax3.set_title('`match_template`\nresult')
-# highlight matched region
-ax3.autoscale(False)
-ax3.plot(x, y, 'o', markeredgecolor='r', markerfacecolor='none', markersize=10)
-
-plt.show()
+rad = cmos.Radiation("north")
+data = rad.load_data()
