@@ -6,7 +6,7 @@ from datetime import datetime as dt
 import scipy.ndimage
 import scipy.signal
 import skimage.morphology
-import cv2
+from skimage.feature import match_template
 
 
 class SkyImagerSetup(Instrument):
@@ -35,9 +35,6 @@ class SkyImagerSetup(Instrument):
 
         self.sky_imager.load_image(img_path,540)
         img = self.sky_imager.original_image
-        rows, cols = self.sky_imager.get_image_size()
-        M = cv2.getRotationMatrix2D((cols / 2, rows / 2), -self.sky_imager.azimuth_offset, 1)
-        img = cv2.warpAffine(img, M, (cols, rows))
         img = scipy.ndimage.filters.gaussian_filter(img, 3)
         r_ch = img[:, :, 0]
         sun_filter = r_ch > r_thres
@@ -49,3 +46,17 @@ class SkyImagerSetup(Instrument):
 
         self.sun_azimuth_offset.append(sun_azimuth_img-self.sky_imager.sun_azimuth)
         self.sun_elevation_offset.append(sun_elevation_img-self.sky_imager.sun_elevation)
+
+    @staticmethod
+    def auto_calib_elevation_offset(cloud_mask_to_fit_on, cloud_mask_to_be_fitted):
+
+        mask_for_template = cloud_mask_to_fit_on
+        x_size,y_size = mask_for_template.shape
+        x_half = int(x_size/2)
+        y_half = int(y_size/2)
+        size = 200
+        template = mask_for_template[x_half-size:x_half+size,y_half-size:y_half+size]
+
+        result = match_template(cloud_mask_to_be_fitted,template)
+
+        return result,template

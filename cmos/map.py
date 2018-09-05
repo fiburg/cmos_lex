@@ -139,6 +139,16 @@ class Map(object):
                      alpha=0.9)
 
     def add_outside_range(self,shadow_mask, cmap="Greys"):
+        """
+        Method to determine areas, which are outside of the range of the cameras.
+
+        Args:
+            shadow_mask:
+            cmap:
+
+        Returns:
+
+        """
         outer_mask_size = 1000
         masking_value = 100
 
@@ -155,13 +165,6 @@ class Map(object):
 
         self.outer_mask = outer_mask
 
-        #
-        # print("Running loop")
-        # idx = []
-        # for x in shadow_mask[:,0,2]:
-        #     for y in shadow_mask[0,:,1]:
-        #         idx.append(cmos.SkyImager.find_nearest_idx(outer_mask[:,:,1],outer_mask[:,:,2],x,y))
-
 
         print("plotting mask!!!")
 
@@ -176,13 +179,22 @@ class Map(object):
                                  )
 
     def create_shadow_mask(self,cloud_mask):
+        """
+        Uses the cloud mask to calculate the offset for the shadow on the ground.
+        sets self.shadow_mask
+
+        Args:
+            cloud_mask:
+
+        Returns:
+
+        """
         cloud_mask[:, :, 0][cloud_mask[:, :, 0] == 0] = np.nan
 
         a = [cloud_mask[:, :, 0] == 2]
         b = [cloud_mask[:,:,1] == np.nan]
 
         mask = np.logical_and(a,b)[0,:,:]
-        self.mask = mask
         cloud_mask[: ,:, 0][mask] = np.nan
         cloud_mask[:, :, 1][mask] = np.nan
         cloud_mask[:, :, 2][mask] = np.nan
@@ -193,7 +205,7 @@ class Map(object):
         shadow_mask = self.calculate_shadow_offset(cloud_mask)
         self.shadow_mask = shadow_mask
 
-    def add_shadows(self, cmap="Greys", vmin=0., vmax=3.):
+    def add_shadows(self, cmap="Greys_r", vmin=0., vmax=3.):
         """
         Adds the shadow mask to the map. The shadow mask is calculated
         by sun position and cloud mask.
@@ -214,7 +226,7 @@ class Map(object):
         b = a.copy()
         b[:,:] = 0
         c = np.nan_to_num(shadow_mask[:,:,1])
-        b = [c == 0 ][0]
+        b = [c == 0][0]
 
         mask = np.logical_and(a,b)
         self.mask = mask
@@ -232,7 +244,7 @@ class Map(object):
                      cmap=cmap,
                      vmin=vmin,
                      vmax=vmax,
-                     alpha=0.7)
+                     alpha=0.5)
 
     def add_station_marker(self, name, lat, lon, color='red', marker='o', marker_size=14):
         """
