@@ -4,15 +4,7 @@ import numpy as np
 import cv2
 import sklearn.preprocessing
 
-output_folder = "C:/Users/darkl/Desktop/cmos/plots_for_poster/"
 
-file = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM2_JPG_20180826/LEX_WKM2_Image_20180826_112520_UTCp1.jpg"
-sky_imager = cmos.SkyImager("hq")
-sky_imager.get_date_from_image_name(file)
-
-ceilo = cmos.Ceilometer()
-cloud_height = ceilo.get_height(sky_imager.date)
-sky_imager.load_image(file,cloud_height=cloud_height)
 
 
 def save_orig_image(sky_imager,output_folder,output_name="original_image.png"):
@@ -104,8 +96,9 @@ def save_rotation_mask(sky_imager,output_folder,output_name="rotation_mask.png")
     print("Saved rotation mask at: " + output_folder + output_name)
 
 def save_rotated_image(sky_imager,output_folder,output_name="rotation_image.png"):
-    angle_image_orig = sky_imager.image.copy()
-    angle_image_offset = rotate_image(angle_image_orig,example_rotation)
+    temp_image = sky_imager.original_image.copy()
+    temp_image = sky_imager.crop_image(temp_image)
+    angle_image_offset = rotate_image(temp_image,example_rotation)
     image = angle_image_offset[:,:,::-1]
     cv2.imwrite(output_folder + output_name, image)
     print("Saved rotated image at: " + output_folder + output_name)
@@ -162,18 +155,32 @@ def save_cloud_map(sky_imager,output_folder,output_name="cloud_map.png"):
     print("Saved cloud map at: " + output_folder + output_name)
 
 
+if __name__ == "__main__":
+    output_folder = "C:/Users/darkl/Desktop/cmos/Poster/plots_for_technical_poster/"
+    file = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM2_JPG_20180826/LEX_WKM2_Image_20180826_112520_UTCp1.jpg"
+    sky_imager = cmos.SkyImager("hq")
+    sky_imager.get_date_from_image_name(file)
 
-# Uebtertriebene Rotation zu Veranschauungszwecken:
-global example_rotation
-example_rotation = 25
+    ceilo = cmos.Ceilometer()
+    cloud_height = ceilo.get_height(sky_imager.date)
+    sky_imager.load_image(file, cloud_height=cloud_height)
 
-# save_orig_image(sky_imager,output_folder)
-# save_crop_mask(sky_imager,output_folder)
-# save_crop_image(sky_imager,output_folder)
-# save_sun_mask(sky_imager,output_folder)
-# save_sun_image(sky_imager,output_folder)
-# save_rotation_mask(sky_imager,output_folder)
-# save_rotated_image(sky_imager,output_folder)
-# save_cloud_mask(sky_imager,output_folder)
-# save_cloud_image(sky_imager,output_folder)
-save_cloud_map(sky_imager,output_folder)
+
+
+    # Uebtertriebene Rotation zu Veranschauungszwecken:
+    global example_rotation
+    example_rotation = 25
+
+    # Diese funktionen simulieren einzeln in der richtigen Reihenfolge,
+    # wie das Programm funktioniert:
+
+    # save_orig_image(sky_imager,output_folder)
+    # save_crop_mask(sky_imager,output_folder)
+    # save_crop_image(sky_imager,output_folder)
+    # save_rotation_mask(sky_imager,output_folder)
+    save_rotated_image(sky_imager,output_folder)
+    # save_sun_mask(sky_imager,output_folder)
+    # save_sun_image(sky_imager,output_folder)
+    # save_cloud_mask(sky_imager,output_folder)
+    # save_cloud_image(sky_imager,output_folder)
+    # save_cloud_map(sky_imager,output_folder)
