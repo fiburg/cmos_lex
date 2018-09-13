@@ -53,6 +53,9 @@ class Ceilometer(Instrument):
 
                 self.cloud_height = cloud_height[dates_off.index(min(dates_off))]
 
+                if self.cloud_height > 4000:
+                    self.cloud_height = 1000
+
         except:
             print("Ceilometer file is broken...")
 

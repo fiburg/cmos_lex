@@ -73,11 +73,11 @@ class SkyImager(Instrument):
         self.image = image_array
         self.original_image = self.image.copy()
         self.scale_factor = scale_factor
-        self._apply_rotation_calib()
 
         self.crop_elevation = crop_elevation
         self.image = self.crop_image(self.image, self.crop_elevation)
 
+        self._apply_rotation_calib()
         self.get_date_from_image_name()
         self.get_sun_position()
         self.remove_sun()
@@ -92,6 +92,10 @@ class SkyImager(Instrument):
         """
         if not filename:
             filename = os.path.split(self.input_file)[-1]
+
+        else:
+            filename = os.path.split(filename)[-1]
+
 
         _date = "_".join(filename.split("_")[3:5])
         self.date = dt.strptime(_date, "%Y%m%d_%H%M%S")
@@ -140,14 +144,14 @@ class SkyImager(Instrument):
 
         center_mask = x ** 2 + y ** 2 <= (crop_size) ** 2
 
-        print("DIMENSION: ", np.ndim(image))
+        # print("DIMENSION: ", np.ndim(image))
         if np.shape(image)[2] == 3:
             image[:,:,:][~center_mask] = [crop_value,crop_value,crop_value]
         elif np.shape(image)[2] == 2:
-            print("Cropping image!")
+            # print("Cropping image!")
             image[:, :][~center_mask] = [crop_value,crop_value]
         elif np.ndim(image) == 2:
-            print("Cropping image!")
+            # print("Cropping image!")
             image[:, :][~center_mask] = crop_value
         else:
             raise IndexError("For this index the cropping is not implemented yet.")
@@ -156,16 +160,20 @@ class SkyImager(Instrument):
 
         return image
 
-    def _read_lense_settings(self):
-        pass
 
     def create_cloud_mask(self):
         """
         Creates an array self.cloud_image where clouds are masked, based on some
         sky index (SI) and brightness index (BI).
+        Furthermore creates the self.cloud_mask.
 
-        Returns:
+        The algorithm works, by comparing pixel values relative to each other and
+        setting pixel to be a "cloud", when a certain threshold is met:
+         >>> mask_sol1 = SI < 0.12
 
+        In the area around the sun, where "sun-glare" at the lense is present, this
+        threshold is set dynamically dependent on the distance between each pixel and
+        the sun.
         """
 
         image_f = self.image.astype(float)
@@ -176,7 +184,7 @@ class SkyImager(Instrument):
 
         SI[np.isnan(SI)] = 1
 
-        mask_sol1 = SI < 0.12
+        mask_sol1 = SI < 0.18
 
         x_sol_cen, y_sol_cen = self.ele_azi_to_pixel(self.sun_azimuth, self.sun_elevation)
         x_size, y_size = self.get_image_size()
@@ -190,14 +198,15 @@ class SkyImager(Instrument):
         self.cloud_image = self.image.copy()
         self.cloud_image[:, :, :][new_mask] = [255, 0, 0]
         self.cloud_mask = self.cloud_image[:,:,0].copy()
-        self.cloud_mask[:,:] = 0
+        self.cloud_mask[:,:][np.where(self.cloud_mask != 0)] = 2
+        self.cloud_mask[:,:][self.mask_around_sun] = 0
         self.cloud_mask[:,:][new_mask] = 1
+
 
         Radius_sol = 100
         sol_mask_cen = x ** 2 + y ** 2 <= Radius_sol ** 2
 
         # AREA AROUND SUN:
-
         parameter = np.zeros(size)
         for j in range(size):
             parameter[j] = (0 + j * 0.4424283716980435 - pow(j, 2) * 0.06676211439554262 + pow(j,3) *
@@ -218,6 +227,11 @@ class SkyImager(Instrument):
 
 
     def create_lat_lon_cloud_mask(self):
+        """
+        Creates the self.lat_lon_cloud_mask. This is the same as the cloud mask,
+        but also contains the latitude and longitude to each pixel inside that mask.
+
+        """
         if not isinstance(self.image,collections.Iterable):
             raise NotImplementedError("No image loaded yet. Image needs to be loaded first using the load_image method.")
 
@@ -343,6 +357,18 @@ class SkyImager(Instrument):
         self.angle_array = self.crop_image(angle_array,elevation=self.crop_elevation,crop_value=0)
 
     def ele_azi_to_pixel(self,azimuth,elevation):
+
+        """
+        Converts an azimuth and elevation angle to the position of the pixel
+        inside the image.
+
+        Args:
+            azimuth: azimuth angle
+            elevation: elevation angle
+
+        Returns:
+
+        """
         x_size, y_size = self.get_image_size()
 
         r = x_size/2 * ( 1 - ((90-elevation)/90))
@@ -485,7 +511,7 @@ class SkyImager(Instrument):
         # x_sol_cen, y_sol_cen = sun_pos
         x_sol_cen, y_sol_cen = self.ele_azi_to_pixel(self.sun_azimuth,self.sun_elevation)
 
-        print("X_SOL_CEN", x_sol_cen, y_sol_cen)
+        # print("X_SOL_CEN", x_sol_cen, y_sol_cen)
         Radius_sol = 100
         Radius_sol_center = 0
 
@@ -498,19 +524,43 @@ class SkyImager(Instrument):
         self.image[:, :, :][sol_mask_cen1] = [0, 0, 0]
 
         self.image_mask = np.logical_xor(self.image_mask, sol_mask_cen1)
+        self.mask_around_sun = sol_mask_cen1
 
     def _rotate_image(self, deg):
+        """
+        Uses the mathematical rotation of a matrix by creating a rotation-matrix M
+        to rotate the image by a certain degree.
+
+        The result is stored as class-variable self.rotated
+
+        Args:
+            deg: degree (in meteorological direction) for the image to be rotated
+        """
         rows, cols = self.get_image_size()
         M = cv2.getRotationMatrix2D((cols / 2, rows / 2), -deg, 1)
-        return cv2.warpAffine(self.image, M, (cols, rows))
+        self.rotated = cv2.warpAffine(self.image, M, (cols, rows))
 
     def _apply_rotation_calib(self):
-        self.image = self._rotate_image(self.azimuth_offset)
+        """
+        Just an inside method to apply the rotation to each loaded image.
+        """
+        self._rotate_image(self.azimuth_offset)
 
     def shadow_on_cam_position(self):
+        """
+        This method determines weather the position of a camera is shaded at the
+        moment or is in direct sunlight.
 
+        Returns:
+            0 if the camera is in direct sun light.
+            1 if the camera is shaded by a cloud.
+
+        """
         if not isinstance(self.lat_lon_cloud_mask, collections.Iterable):
             self.create_lat_lon_cloud_mask()
+
+        # if not lat:
+        #     lat = self.lat
 
         map = cmos.Map()
         map.sun_elevation = self.sun_elevation

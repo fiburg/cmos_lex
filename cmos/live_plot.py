@@ -56,8 +56,9 @@ def live_plot(output_path, image_folder):
                                 cloud_height=sky_imager.cloud_height,
                                 sun_azimuth=sky_imager.sun_azimuth,
                                 sun_elevation=sky_imager.sun_elevation)
-        ax3.add_shadows(sky_imager.lat_lon_cloud_mask)
-        ax3.add_clouds(sky_imager.lat_lon_cloud_mask)
+        ax3.create_shadow_mask(sky_imager.lat_lon_cloud_mask)
+        ax3.add_shadows()
+        # ax3.add_clouds(sky_imager.lat_lon_cloud_mask)
         ax3.add_station_marker(sky_imager.instrument_name, sky_imager.lat, sky_imager.lon, color=base_color)
         ax3.add_setting_title('Clouds and shadows', size=16)
 
@@ -66,10 +67,12 @@ def live_plot(output_path, image_folder):
 
         print("Removing old layers from Map...")
         ax3.remove_sky_values()
+        map.remove_sky_values()
 
         # plt.show()
         print("sleeping")
         time.sleep(10)
         print("sleeping done")
+
         # plt.close()
 
