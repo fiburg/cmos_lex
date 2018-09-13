@@ -14,7 +14,7 @@ class Instrument(object):
         date : timestamp, datetime object
     """
 
-    VALID_INSTRUMENT_NAMES = ["hq", "south", "west", "rad_south", "rad_north", "ceilo"]
+    VALID_INSTRUMENT_NAMES = ["hq", "south", "west", "rad_south", "rad_north", "rad_hq", "ceilo"]
 
     def __init__(self):
         self.lat = None
@@ -68,7 +68,10 @@ class Instrument(object):
             "hq":"cam2",
             "south":"cam4",
             "west":"cam3",
-            "ceilo":"ceilo"
+            "ceilo":"ceilo",
+            "rad_hq":"rad_hq",
+            "rad_north": "rad_north",
+            "rad_south": "rad_south"
         }
 
         return inst[instrument_name]
