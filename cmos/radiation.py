@@ -106,6 +106,9 @@ class Radiation(Instrument):
                     self.radiation = np.nan
                     self.radiation_thres = np.nan
 
+        except FileNotFoundError as fnfe:
+            raise fnfe
+
         except:
             print("Radiation file is broken...")
 
@@ -114,6 +117,9 @@ class Radiation(Instrument):
 
     def is_shaded(self, date):
         self._set_radiation_hq(date)
+
+        if np.isnan(self.radiation):
+            return np.nan
 
         return (self.radiation < self.radiation_thres)
 
@@ -129,7 +135,7 @@ class Radiation(Instrument):
 
 if __name__ == "__main__":
     rad_hq = Radiation('rad_hq')
-    date_object = dt.datetime.strptime("30.08.2018 10:10:00 +0000",
+    date_object = dt.datetime.strptime("28.08.2018 10:10:00 +0000",
                                        '%d.%m.%Y %H:%M:%S %z')
 
     print(rad_hq.is_shaded(date_object))

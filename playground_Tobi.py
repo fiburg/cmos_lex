@@ -104,5 +104,5 @@ import glob
 
 #####################################
 
-rad = cmos.Radiation("north")
+rad = cmos.Radiation("rad_north")
 data = rad.load_data()
