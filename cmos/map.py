@@ -292,6 +292,8 @@ class Map(object):
         shadow_mask = cloud_mask.copy()
         shadow_mask[:,:,1] = final_latitude
         shadow_mask[:,:,2] = final_longitude
+        shadow_mask[:,:,1][np.where( shadow_mask[:,:,1] < 1)] = np.nan
+        shadow_mask[:, :, 2][np.where(shadow_mask[:, :, 2] < 1)] = np.nan
 
         return shadow_mask
 

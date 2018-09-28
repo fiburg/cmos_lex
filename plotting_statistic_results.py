@@ -20,7 +20,7 @@ def dates2datetime(dates):
     return dates_obj
 
 if __name__ == "__main__":
-    file = "/home/tobias/PycharmProjects/MPI-GIT/cmos_lex/statistic_results_20180827.json"
+    file = "/home/tobias/PycharmProjects/MPI-GIT/cmos_lex/statistic_results_20180828.json"
     with open(file, "r") as f:
         data = json.loads(f.read())
 
@@ -31,6 +31,8 @@ if __name__ == "__main__":
 
     dates_dt = dates2datetime(dates)
 
-    plt.plot(dates_dt,pyr, color="red")
-    # plt.plot(dates_dt,cam, color="blue")
+    x = np.arange(0,len(pyr))
+
+    plt.scatter(x,pyr, color="red")
+    plt.scatter(x,cam, color="blue")
     plt.show()

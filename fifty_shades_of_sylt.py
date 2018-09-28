@@ -6,12 +6,14 @@ import sys
 from joblib import Parallel,delayed
 import asyncio
 import json
+import numpy as np
+import ast
 
 
 async def get_shades(file):
     print(file)
-
-    sky_imager = cmos.SkyImager("hq")
+    results = {}
+    sky_imager = cmos.SkyImager("south")
 
     rad_hq = cmos.Radiation("rad_hq")
     ceilo = cmos.Ceilometer()
@@ -22,19 +24,24 @@ async def get_shades(file):
 
     date_object = sky_imager.date
 
+    hq_lat = 54.494541
+    hq_lon =  11.240319
+
     pyr_is_shaded = float(rad_hq.is_shaded(date_object))
-    cam_is_shaded = float(sky_imager.shadow_on_cam_position())
+
+    cam_is_shaded = sky_imager.shadow_on_lat_lon(hq_lat,hq_lon)
+    print("RESULT: %f"%cam_is_shaded)
 
     result = {"pyr" : pyr_is_shaded,
               "cam" : cam_is_shaded}
     results[date_object.strftime("%Y%m%d_%H%M%S")] = result
-
+    return results
 
 def controller(files):
     tasks = [get_shades(file) for file in files]
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(asyncio.wait(tasks))
-
+    res = loop.run_until_complete(asyncio.wait(tasks))
+    return str(res)
 
 def chunkIt(seq, num):
     avg = len(seq) / float(num)
@@ -47,37 +54,40 @@ def chunkIt(seq, num):
 
     return out
 
+def Parrallel2results(stuff):
+    results = {}
+    for element in stuff:
+        result_parts = element.split("result=")[1:]
+        for result_part in result_parts:
+            second_part = result_part.split(">")[0]
+            second_part_json = second_part.replace("'",'"')
+            temp_r = json.loads(second_part_json)
+            results[list(temp_r.keys())[0]] = list(temp_r.values())[0]
 
-def get_dates(files):
-    date_strs = []
-    for file in files:
-        file = file.split("/")[-1]
-        date_str = file.split("_")[-3:-1]
-        date_str = "_".join(date_str)
-        date_strs.append(date_str)
-
-    return date_strs
+    return results
 
 
-def get_dummy_results(date_strs):
-    for date_str in date_strs:
-        results[date_str] = 777
+
 
 if __name__ == "__main__":
-    dates = ["20180827","20180828", "20180829", "20180830", "20180831","20180901","20180902","20180903"]
-    for date in dates:
-        files = sorted(glob.glob("/home/tobias/Documents/cmos_data/skyimager/%s/*.jpg"%date))
-        global results
-        results = {}
+    dates = ["20180902","20180903","20180827","20180828", "20180830", "20180831","20180901"]
+    for date in dates[:1]:
+        files = sorted(glob.glob("/home/tobias/Documents/cmos_data/skyimager/WKM4/%s/*.jpg"%date))
+        # print(files)
+
         out_file = "statistic_results_%s.json"%date
-        #
-        # strs = get_dates(files)
-        # get_dummy_results(strs)
 
-        file_parts = chunkIt(files,50)
 
-        Parallel(n_jobs=1, verbose=5)(delayed(controller)(file) for file in file_parts)
+        chunk_numbers = 3
+        file_parts = chunkIt(files,chunk_numbers)
 
-        with open(out_file,"w") as f:
-            f.write(json.dumps(results))
+        stuff = Parallel(n_jobs=3, verbose=5)(delayed(controller)(file) for file in file_parts)
+        try:
+            results = Parrallel2results(stuff)
+
+            with open(out_file,"w") as f:
+                f.write(json.dumps(results))
+        except:
+            print("NO OUTPUTFILE WRITTEN! For Date: %s"%date)
+            break
 

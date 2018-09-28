@@ -37,7 +37,7 @@ class Instrument(object):
         here = os.path.split(here)[0]
         init_file = (here+"/../data/"+self._get_inst_inits(self.instrument_name)+".ini")
 
-        print(init_file)
+        # print(init_file)
 
         with open(init_file):
             # This is to check weather the file exists.
