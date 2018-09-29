@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import json
 import numpy as np
 from datetime import datetime as dt
+from cmos.evaluation import *
 
 def split_pyr_cam(data):
 
@@ -19,15 +20,27 @@ def dates2datetime(dates):
     dates_obj = f(dates)
     return dates_obj
 
+
+
+
 if __name__ == "__main__":
-    file = "/home/tobias/PycharmProjects/MPI-GIT/cmos_lex/statistic_results_20180828.json"
+    file = "/home/tobias/PycharmProjects/MPI-GIT/cmos_lex/statistic_results_20180902.json"
     with open(file, "r") as f:
         data = json.loads(f.read())
 
     dates = list(data.keys())
     pyr, cam = split_pyr_cam(data)
 
-    np.where(cam != 1)
+    cam[np.where(cam == 2)] = np.nan
+    cam[cam > 0.5] = 1
+    cam[cam <=0.5] = 0
+
+    pyr = pyr[~np.isnan(cam)]
+    cam = cam[~np.isnan(cam)]
+    diff = cam - pyr
+
+    match = len(np.where(diff == 0)[0])
+    non_match = len(np.where(diff != 0)[0])
 
     dates_dt = dates2datetime(dates)
 
@@ -36,3 +49,13 @@ if __name__ == "__main__":
     plt.scatter(x,pyr, color="red")
     plt.scatter(x,cam, color="blue")
     plt.show()
+
+    a,b,c,d = get_contingency_table(cam,pyr)
+    hss = heidke_skill_score(a,b,c,d)
+    pss = peirce_skill_score(a,b,c,d)
+
+    print("RMSE : %f"%rmse(cam,pyr))
+    print("MATCH: %i"%match)
+    print("No MATCH: %i"%non_match)
+    print("Heidke Skill Score: %f"%hss)
+    print("Peirce Skill Score: %f"%pss)

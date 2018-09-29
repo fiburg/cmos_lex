@@ -30,7 +30,7 @@ async def get_shades(file):
     pyr_is_shaded = float(rad_hq.is_shaded(date_object))
 
     cam_is_shaded = sky_imager.shadow_on_lat_lon(hq_lat,hq_lon)
-    print("RESULT: %f"%cam_is_shaded)
+ #   print("RESULT: %f"%cam_is_shaded)
 
     result = {"pyr" : pyr_is_shaded,
               "cam" : cam_is_shaded}
@@ -70,18 +70,18 @@ def Parrallel2results(stuff):
 
 
 if __name__ == "__main__":
-    dates = ["20180902","20180903","20180827","20180828", "20180830", "20180831","20180901"]
-    for date in dates[:1]:
+    dates = [ "20180830", "20180831","20180901","20180902","20180903","20180827","20180828"]
+    for date in dates[1:]:
         files = sorted(glob.glob("/home/tobias/Documents/cmos_data/skyimager/WKM4/%s/*.jpg"%date))
         # print(files)
 
         out_file = "statistic_results_%s.json"%date
 
 
-        chunk_numbers = 3
+        chunk_numbers = 40
         file_parts = chunkIt(files,chunk_numbers)
 
-        stuff = Parallel(n_jobs=3, verbose=5)(delayed(controller)(file) for file in file_parts)
+        stuff = Parallel(n_jobs=-1, verbose=5)(delayed(controller)(file) for file in file_parts)
         try:
             results = Parrallel2results(stuff)
 
