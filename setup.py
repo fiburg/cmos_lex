@@ -59,11 +59,13 @@ setup(name='cmos',
           'numpy>=1.6',
           'matplotlib>=1.4',
           'scipy>=0.19.1',
-          'configparser>3',
+          'configparser',
           'cartopy>=0.16.0',
           'geopy>=1.16.0',
           'pysolar>=0.7',
-          'Pillow>=5.2.0'
+          'Pillow>=5.2.0',
+          'scikit-image',
+          'opencv'
       ],
 
       include_package_data=True,

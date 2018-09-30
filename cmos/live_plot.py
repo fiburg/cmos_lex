@@ -20,6 +20,7 @@ def live_plot(output_path, image_folder):
 
 
     while True:
+        print(files)
         file = sorted(glob.glob(files))[-1]
         print(file)
 

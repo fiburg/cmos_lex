@@ -12,8 +12,20 @@ import glob
 # files = "W:/Aufzeichnung/wkm2/jpg/LEX_WKM2_Image_*_UTCp1.jpg"
 # file = sorted(glob.glob(files))[-1]
 
-# sky_imager = cmos.SkyImager("hq")
-# sky_imager.load_image(file,cloud_height=540)
+
+file = "/home/tobias/Documents/cmos_data/skyimager/20180828/LEX_WKM2_Image_20180828_180400_UTCp1.jpg"
+file = "/home/tobias/Documents/cmos_data/skyimager/WKM4/20180902/LEX_WKM4_Image_20180902_123000_UTCp1.jpg"
+sky_imager = cmos.SkyImager("south")
+ceilo = cmos.Ceilometer()
+sky_imager.get_date_from_image_name(file)
+cloud_height = ceilo.get_height(sky_imager.date)
+sky_imager.load_image(file,cloud_height=cloud_height)
+hq_lat = 54.494541
+hq_lon = 11.240319
+cm =sky_imager.shadow_on_lat_lon(hq_lat,hq_lon)
+plt.imshow(sky_imager.image)
+plt.show()
+
 #
 # print(sky_imager.date)
 # print(sky_imager.height)
@@ -44,16 +56,16 @@ import glob
 # ax2.imshow(sky_imager.original_image)
 # ax3.imshow(sky_imager.rotated)
 # plt.show()
+
+# fig1, (ax1,ax2) = plt.subplots(ncols=2)
+# im = ax1.imshow(sky_imager.angle_array[:,:,0])
+# fig1.colorbar(im,ax=ax1)
+# ax1.set_title("Azimuth", fontsize=25)
 #
-# # fig1, (ax1,ax2) = plt.subplots(ncols=2)
-# # im = ax1.imshow(sky_imager.angle_array[:,:,0])
-# # fig1.colorbar(im,ax=ax1)
-# # ax1.set_title("Azimuth", fontsize=25)
-# #
-# # im2 = ax2.imshow(sky_imager.angle_array[:,:,1])
-# # fig1.colorbar(im2,ax=ax2)
-# # ax2.set_title("Zenith", fontsize=25)
-# # plt.show()
+# im2 = ax2.imshow(sky_imager.angle_array[:,:,1])
+# fig1.colorbar(im2,ax=ax2)
+# ax2.set_title("Zenith", fontsize=25)
+# plt.show()
 
 #####################################
 # time = "120800"
@@ -103,6 +115,6 @@ import glob
 # plt.show()
 
 #####################################
-
-rad = cmos.Radiation("north")
-data = rad.load_data()
+#
+# rad = cmos.Radiation("rad_north")
+# data = rad.load_data()

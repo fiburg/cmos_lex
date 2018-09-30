@@ -5,3 +5,4 @@ from .map import Map
 from .ceilometer import Ceilometer
 from .live_plot import live_plot
 from .radiation import Radiation
+from . import evaluation

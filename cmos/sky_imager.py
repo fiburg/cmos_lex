@@ -82,7 +82,7 @@ class SkyImager(Instrument):
         self.get_sun_position()
         self.remove_sun()
         self.create_cloud_mask()
-        # self.create_lat_lon_cloud_mask()
+        self.create_lat_lon_cloud_mask()
 
 
     def get_date_from_image_name(self, filename=None):
@@ -546,7 +546,7 @@ class SkyImager(Instrument):
         """
         self._rotate_image(self.azimuth_offset)
 
-    def shadow_on_cam_position(self):
+    def shadow_on_lat_lon(self,lat,lon):
         """
         This method determines weather the position of a camera is shaded at the
         moment or is in direct sunlight.
@@ -568,25 +568,33 @@ class SkyImager(Instrument):
         map.cloud_height = self.cloud_height
 
         cloud_above_cam = self.lat_lon_cloud_mask.copy()
-        cloud_above_cam[:,:,0][self.angle_array[:,:,1] > 1] = 0
+
         cloud_above_cam[np.isnan(cloud_above_cam)] = 0
+        shadow_from_cam = map.calculate_shadow_offset(cloud_above_cam)
+
+        shadow_from_cam_new = shadow_from_cam[np.where(~np.isnan(shadow_from_cam[:, :, 1]))] # throw away all NaNs
 
 
+        lat_lon_area = 1e-4 # this corresponds to an resulting circle of about 25m diameter
+        # to make the next few lines readable renaming shadow_from_cam to cm:
+        cm = shadow_from_cam_new.copy()
+        cm = cm[np.where(cm[:, 1] < lat + lat_lon_area)]
+        cm = cm[np.where(cm[:, 1] > lat - lat_lon_area)]
+        cm = cm[np.where(cm[:, 2] < lon + lat_lon_area)]
+        cm = cm[np.where(cm[:, 2] > lon - lat_lon_area)]
 
-        # print("CLOUD_ABOVE_CAM:", cloud_above_cam.shape)
-        print(np.where(cloud_above_cam >0))
-        shadow_above_cam = map.calculate_shadow_offset(cloud_above_cam)
-        # print("SHAPE:",shadow_above_cam.shape)
-        # print("Shadow_above_cam",shadow_above_cam[np.where(shadow_above_cam[:,:,0] > 0)].shape)
 
+        cm[np.where(cm[:,0] == 0)] = np.nan
+        cm[np.where(cm[:, 0] == 2)] = 0
 
-        shadow_index_at_cam = np.nansum(shadow_above_cam[:,:,0])
+        if len(cm) == 0: # if no information are known at the position of the cam:
+            return 2.
+
+        # print("SHAPE:",shadow_from_cam.shape)
+        # print("Shadow_above_cam",shadow_from_cam[np.where(shadow_from_cam[:,:,0] > 0)].shape)
+
+        shadow_index_at_cam = np.nanmean(cm[:,0])
         print("SHADOWINDEX:",shadow_index_at_cam)
 
-        if shadow_index_at_cam > 100:
-            print("Shadow!")
-            return 1
+        return shadow_index_at_cam
 
-        else:
-            print("NO Shadow!")
-            return 0
