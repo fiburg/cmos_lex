@@ -135,13 +135,13 @@ def save_cloud_image(sky_imager,output_folder,output_name="cloud_image.png"):
     print("Saved cloud mask at: " + output_folder + output_name)
 
 def save_cloud_map(sky_imager,output_folder,output_name="cloud_map.png"):
-    map = cmos.Map()
-    fig = plt.figure(frameon=False)
-    w, h = sky_imager.get_image_size()
-    fig.set_size_inches(int(w / 100), int(h / 100))
+    map = cmos.Map(lat_min=11.18, lat_max=11.30, lon_min=54.47, lon_max=54.53)
+    fig = plt.figure()
+    #w, h = sky_imager.get_image_size()
+    #fig.set_size_inches(int(w / 100), int(h / 100))
     ax = plt.Axes(fig, [0., 0., 1., 1.])
     fig.add_axes(ax)
-    ax = map.make_map(subplot_info=111,tile_resolution=15)
+    ax = map.make_map(subplot_info=111,tile_resolution=13)
     ax.set_positional_data(date=sky_imager.date,
                             cloud_height=sky_imager.cloud_height,
                             sun_azimuth=sky_imager.sun_azimuth,
@@ -150,14 +150,15 @@ def save_cloud_map(sky_imager,output_folder,output_name="cloud_map.png"):
     sky_imager.create_lat_lon_cloud_mask()
     ax.create_shadow_mask(sky_imager.lat_lon_cloud_mask)
     ax.add_shadows()
+    plt.tight_layout()
     fig.savefig(output_folder + output_name, dpi=700)
     plt.close()
     print("Saved cloud map at: " + output_folder + output_name)
 
 
 if __name__ == "__main__":
-    output_folder = "C:/Users/darkl/Desktop/cmos/Poster/plots_for_technical_poster/"
-    file = "C:/Users/darkl/Desktop/cmos/skyimager/LEX_WKM2_JPG_20180826/LEX_WKM2_Image_20180826_112520_UTCp1.jpg"
+    output_folder = "./"
+    file = "/home/fibu/Studium/18_SoSe/Lehrexkursion/Daten/LEX_WKM2_Image_20180826_112520_UTCp1.jpg"
     sky_imager = cmos.SkyImager("hq")
     sky_imager.get_date_from_image_name(file)
 
@@ -178,9 +179,9 @@ if __name__ == "__main__":
     # save_crop_mask(sky_imager,output_folder)
     # save_crop_image(sky_imager,output_folder)
     # save_rotation_mask(sky_imager,output_folder)
-    save_rotated_image(sky_imager,output_folder)
+    # save_rotated_image(sky_imager,output_folder)
     # save_sun_mask(sky_imager,output_folder)
     # save_sun_image(sky_imager,output_folder)
     # save_cloud_mask(sky_imager,output_folder)
     # save_cloud_image(sky_imager,output_folder)
-    # save_cloud_map(sky_imager,output_folder)
+    save_cloud_map(sky_imager,output_folder)

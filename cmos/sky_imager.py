@@ -71,13 +71,13 @@ class SkyImager(Instrument):
         image_array.setflags(write=True)
 
         self.image = image_array
+        self._apply_rotation_calib()
         self.original_image = self.image.copy()
         self.scale_factor = scale_factor
 
         self.crop_elevation = crop_elevation
         self.image = self.crop_image(self.image, self.crop_elevation)
 
-        self._apply_rotation_calib()
         self.get_date_from_image_name()
         self.get_sun_position()
         self.remove_sun()
@@ -538,7 +538,7 @@ class SkyImager(Instrument):
         """
         rows, cols = self.get_image_size()
         M = cv2.getRotationMatrix2D((cols / 2, rows / 2), -deg, 1)
-        self.rotated = cv2.warpAffine(self.image, M, (cols, rows))
+        self.image = cv2.warpAffine(self.image, M, (cols, rows))
 
     def _apply_rotation_calib(self):
         """

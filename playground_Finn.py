@@ -23,7 +23,7 @@ import cv2
 
 
 
-"""
+
 #multiplot
 
 cloud_height = 2840
@@ -46,8 +46,8 @@ skyim_south.create_lat_lon_cloud_mask()
 
 
 fig = plt.figure()
-map = cmos.Map(lat_min=11.18, lat_max=11.35, lon_min=54.44, lon_max=54.53)
-ax = map.make_map(subplot_info=111)
+map = cmos.Map(lat_min=11.18, lat_max=11.35, lon_min=54.46, lon_max=54.54)
+ax = map.make_map(subplot_info=111, tile_resolution=13)
 
 ax.set_positional_data(date=skyim_hq.date,
                         cloud_height=skyim_hq.cloud_height,
@@ -55,19 +55,21 @@ ax.set_positional_data(date=skyim_hq.date,
                         sun_elevation=skyim_hq.sun_elevation)
 
 
-ax.add_shadows(skyim_hq.lat_lon_cloud_mask, "Reds")
+ax.create_shadow_mask(skyim_hq.lat_lon_cloud_mask)
+ax.add_shadows("Reds_r")
 ax.add_station_marker(skyim_hq.instrument_name, skyim_hq.lat, skyim_hq.lon, color='red')
 
-ax.add_shadows(skyim_west.lat_lon_cloud_mask, "Blues")
+ax.create_shadow_mask(skyim_west.lat_lon_cloud_mask)
+ax.add_shadows("Blues_r")
 ax.add_station_marker(skyim_west.instrument_name, skyim_west.lat, skyim_west.lon, color='blue')
 
-ax.add_shadows(skyim_south.lat_lon_cloud_mask, "Greens")
-ax.add_station_marker(skyim_south.instrument_name, skyim_south.lat, skyim_south.lon, color= 'green')
+ax.create_shadow_mask(skyim_south.lat_lon_cloud_mask)
+ax.add_shadows("Greens_r")
+ax.add_station_marker(skyim_south.instrument_name, skyim_south.lat, skyim_south.lon, color='green')
 
-ax.add_setting_title('CMOS - Shadow map - HQ, West, South')
+#ax.add_setting_title('CMOS - Shadow map - HQ, West, South')
 plt.tight_layout()
-#plt.savefig("./plot/test_shadow_map_corrected_north.png")
-"""
+plt.savefig("./composit.png", dpi=700)
 
 """
 # single plot
@@ -127,7 +129,7 @@ plt.savefig('./new_map.png')
 #ceilo = cmos.Ceilometer()
 #height = ceilo.get_height(skyim_hq.date)
 """
-
+"""
 # process whole day
 pathHQ = ('/home/fibu/Studium/18_SoSe/Lehrexkursion/cmos_lex/data/img/20180826/hq/')
 pathWEST = ('/home/fibu/Studium/18_SoSe/Lehrexkursion/cmos_lex/data/img/20180826/west/')
@@ -210,3 +212,4 @@ while start < stop:
 
 
     start = start + timedelta(seconds=20)
+"""
