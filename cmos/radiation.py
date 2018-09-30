@@ -2,7 +2,7 @@ from cmos import Instrument
 import numpy as np
 import datetime as dt
 import csv
-
+import glob
 
 class Radiation(Instrument):
 
@@ -12,59 +12,56 @@ class Radiation(Instrument):
         self.radiation = np.nan
         self.radiation_thres = np.nan
 
-    def load_data_wxt(self,file):
-        # file = "C:/Users/darkl/Desktop/cmos/radiation/WXT_0A/201808/2800_0r4.txt"
+    def _get_radiation_mob(self, date):
+        filenames = glob.glob(self.path + 'processed/*.txt')
 
-        with open(file,"rb") as f:
-            infos = np.genfromtxt(f,
-                                  names=True,
-                                  delimiter=";",
-                                  dtype=None
+        rad_hq = Radiation('rad_hq')
+        rad_hq._get_radiation_hq(date)
+        self.radiation_thres = rad_hq.get_radiation_threshold(date)
 
-                                  )
+        dates_off = []
+        radiation = []
+        data_available = []
 
-        def bytes2date(byte_array):
-            """
-            Helper function to convert the date and time columns from the input array
-            to datetime objects.
+        for path in filenames:
 
-            Args:
-                byte_array: the raw array from the np.genfromtxt function
+            with open(path) as csvfile:
+                for _ in range(1):
+                    next(csvfile)
 
-            Returns:
-                array containing datetime.datetime objects
-            """
+                readCSV = csv.reader(csvfile, delimiter=';')
+                for row in readCSV:
+                    #print(row[0]) # date
+                    #print(row[1]) # hour
+                    #print(row[4]) # lat
+                    #print(row[5])  # lon
+                    #print(row[13]) # sr
+                    if(float(row[5]) <= self.lon+0.0005 and float(row[5]) >= self.lon-0.0005):
+                        data_available.append(True)
+                    else:
+                        data_available.append(False)
 
-            date_bytes = byte_array["DATE"]
-            time_bytes = byte_array["TIME"]
+                    radiation.append(float(row[13]))
 
-            byte2str = lambda x: x.decode()
-            byte2str = np.vectorize(byte2str)
+                    date_str = row[0] + ' ' + row[1] + ' +0100'
+                    date_object = dt.datetime.strptime(date_str,
+                                                            '%d.%m.%Y %H:%M:%S %z')
+                    dates_off.append(abs(date_object - date))
 
-            date_str_array = byte2str(date_bytes)
-            time_str_array = byte2str(time_bytes)
+        self.date = date
+        self.radiation = radiation[dates_off.index(min(dates_off))]
 
-            combine_date_time = lambda x, y: x + "_" + y
-            combine_date_time = np.vectorize(combine_date_time)
+        if min(dates_off) > dt.timedelta(minutes=1) and data_available[dates_off.index(min(dates_off))]:
+            print("... There is radiation data for "+self.instrument_name+
+                  ", but the timedelta to your timestep exceeds one minute.")
+            self.radiation = np.nan
 
-            combined_str_array = combine_date_time(date_str_array,time_str_array)
+        if not data_available[dates_off.index(min(dates_off))] or min(dates_off) > dt.timedelta(minutes=5):
+            print("... There is no data available for the station "+
+                self.instrument_name+" at this time")
+            self.radiation = np.nan
 
-            time_str2datetime = lambda x: dt.strptime(x.lstrip().rstrip(), "%d.%m.%Y_%H:%M:%S")
-            time_str2datetime = np.vectorize(time_str2datetime)
-
-            date_array = time_str2datetime(combined_str_array)
-
-            return date_array
-
-        data = {}
-        data["date"] = bytes2date(infos)
-        data["lat"] = infos["LAT"]
-        data["lon"] = infos["LON"]
-        data["radiation"] = infos["SR"]
-
-        return data
-
-    def _set_radiation_hq(self, date):
+    def _get_radiation_hq(self, date):
         path = (self.path + 'Tagesdateien/' +
                 str(dt.datetime.strftime(date, ('%Y'))) + '/' +
                 str(dt.datetime.strftime(date, ('%m'))) + '/' +
@@ -93,17 +90,17 @@ class Radiation(Instrument):
                                                        '%d.%m.%Y %H:%M:%S %z')
                     
                     # calc date offset
-                    dates_off.append(abs(date_object
-                                         - dt.timedelta(hours=self.tz_info_num)
-                                         - date))
+                    dates_off.append(abs(date_object - date))
 
 
-                self.date = date
-                self.radiation = radiation[dates_off.index(min(dates_off))]
+                if(self.instrument_name == "rad_hq"):
+                    self.date = date
+                    self.radiation = radiation[dates_off.index(min(dates_off))]
                 self.radiation_thres = radiation_thres[dates_off.index(min(dates_off))]
 
-                if min(dates_off) > dt.timedelta(minutes=2):
-                    self.radiation = np.nan
+                if min(dates_off) > dt.timedelta(minutes=1):
+                    if(self.instrument_name == "rad_hq"):
+                        self.radiation = np.nan
                     self.radiation_thres = np.nan
 
         except FileNotFoundError as fnfe:
@@ -116,26 +113,43 @@ class Radiation(Instrument):
             self.radiation_thres = np.nan
 
     def is_shaded(self, date):
-        self._set_radiation_hq(date)
+        if (self.instrument_name == "rad_hq"):
+            self._get_radiation_hq(date)
+        else:
+            self._get_radiation_mob(date)
 
         if np.isnan(self.radiation):
+            return np.nan
+
+        if np.isnan(self.radiation_thres):
             return np.nan
 
         return (self.radiation < self.radiation_thres)
 
     def get_radiation(self, date):
-        self._set_radiation_hq(date)
+        if (self.instrument_name == "rad_hq"):
+            self._get_radiation_hq(date)
+        else:
+            self._get_radiation_mob(date)
 
         return self.radiation
 
     def get_radiation_threshold(self, date):
-        self._set_radiation_hq(date)
+        if (self.instrument_name == "rad_hq"):
+            self._get_radiation_hq(date)
+        else:
+            self._get_radiation_mob(date)
 
-        return self.radiation
+        return self.radiation_thres
 
 if __name__ == "__main__":
     rad_hq = Radiation('rad_hq')
-    date_object = dt.datetime.strptime("28.08.2018 10:10:00 +0000",
+    date_object = dt.datetime.strptime("28.08.2018 15:10:00 +0000",
                                        '%d.%m.%Y %H:%M:%S %z')
-
     print(rad_hq.is_shaded(date_object))
+
+    rad_north = Radiation('rad_north')
+    print(rad_north.is_shaded(date_object))
+
+    rad_south = Radiation('rad_south')
+    print(rad_south.is_shaded(date_object))
