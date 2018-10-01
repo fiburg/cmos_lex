@@ -21,6 +21,15 @@ def get_contingency_table(prediction, truth):
     d = len(np.where((prediction ==0) & (truth == 0))[0])
     return a,b,c,d
 
+def get_shades_vs_no_shades(prediction,truth):
+
+    prediction_shades = len(np.where((prediction ==1)))
+    prediction_sun = len(np.where((prediction == 0)))
+    truth_shades = len(np.where((truth == 1)))
+    truth_sun = len(np.where((truth == 0)))
+
+    return prediction_shades,prediction_sun, truth_shades, truth_sun
+
 def forecast_rate(a,b,c,d):
     """
     Forecast rate r.
