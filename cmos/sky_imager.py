@@ -302,14 +302,13 @@ class SkyImager(Instrument):
 
         sun_azimuth = pysolar.solar.get_azimuth(latitude_deg=self.lat, longitude_deg=self.lon,
                                                 when=self.date, elevation=self.height)
-
+        solarheading = sun_azimuth
         if sun_azimuth < 0:
             if (sun_azimuth >= -180):
                 solarheading = ((sun_azimuth * -1) + 180)
             if (sun_azimuth < -180):
                 solarheading = ((sun_azimuth * -1) - 180)
-            if sun_azimuth >= 0:
-                solarheading = sun_azimuth
+
 
         self.sun_azimuth = solarheading
 
